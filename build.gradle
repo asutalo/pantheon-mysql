@@ -1,0 +1,41 @@
+plugins {
+    id 'java'
+    id 'base'
+}
+
+repositories {
+    mavenCentral()
+}
+
+group 'com.eu.atit'
+
+version = "0.0.1"
+
+apply plugin: "java"
+apply plugin: 'maven'
+
+sourceCompatibility = '1.15'
+targetCompatibility = '1.15'
+
+compileJava.options.encoding = "UTF-8"
+compileTestJava.options.encoding = "UTF-8"
+
+project.ext.setProperty("release.disableChecks", "true")
+project.ext.setProperty("release.pushTagsOnly", "true")
+
+dependencies {
+    implementation "mysql:mysql-connector-java:8.0.25"
+    testImplementation "org.junit.jupiter:junit-jupiter:5.7.0"
+    testImplementation "org.mockito:mockito-core:3.5.13"
+    testImplementation "org.mockito:mockito-junit-jupiter:3.5.13"
+
+}
+
+test {
+    useJUnitPlatform()
+}
+
+wrapper {
+    gradleVersion = "6.8"
+    distributionType = Wrapper.DistributionType.ALL
+}
