@@ -1,15 +1,13 @@
 package com.eu.at_it.sql_wrapper.query;
 
-public class And implements QueryPart {
+public class And extends KeyWord implements QueryPart {
     static final String AND = " AND ";
-    private final String key;
 
-    public And(String key) {
-        this.key = key;
+    public And() {
     }
 
     @Override
     public String apply(String query) {
-        return query.concat(AND).concat(key).concat(" ");
+        return query.concat(AND);
     }
 }

@@ -6,6 +6,7 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyNoInteractions;
 
@@ -23,5 +24,12 @@ class DeleteTest {
         new Delete().apply(mockPreparedStatement);
 
         verifyNoInteractions(mockPreparedStatement);
+    }
+
+    @SuppressWarnings("ConstantConditions")
+    @Test
+    void isKeyWord() {
+        Delete delete = new Delete();
+        assertTrue(delete instanceof KeyWord);
     }
 }

@@ -1,9 +1,13 @@
 package com.eu.at_it.sql_wrapper.query;
 
+import com.mysql.cj.MysqlType;
+
 import java.util.LinkedList;
 import java.util.List;
 
 public class QueryBuilder {
+    private static final String NONE = "";
+    private static final String COMMA = ", ";
     private final List<QueryPart> queryParts = new LinkedList<>();
     private int paramIndex = 0;
 
@@ -12,34 +16,19 @@ public class QueryBuilder {
         return this;
     }
 
+    public QueryBuilder selectAll() {
+        queryParts.add(new Select());
+        queryParts.add(new All());
+        return this;
+    }
+
+    public QueryBuilder insert(String tableName) {
+        queryParts.add(new Insert(tableName));
+        return this;
+    }
+
     public QueryBuilder delete() {
         queryParts.add(new Delete());
-        return this;
-    }
-
-    public QueryBuilder setString(String key, String value) {
-        queryParts.add(new Set());
-        queryParts.add(new Key(key));
-        queryParts.add(new EqualsString(value, getCurrentIndex()));
-        return this;
-    }
-
-    public QueryBuilder setInt(String key, int value) {
-        queryParts.add(new Set());
-        queryParts.add(new Key(key));
-        queryParts.add(new EqualsInt(value, getCurrentIndex()));
-        return this;
-    }
-
-    public QueryBuilder stringKeyValue(String key, String value) {
-        queryParts.add(new Key(Key.COMMA, key));
-        queryParts.add(new EqualsString(value, getCurrentIndex()));
-        return this;
-    }
-
-    public QueryBuilder intKeyValue(String key, int value) {
-        queryParts.add(new Key(Key.COMMA, key));
-        queryParts.add(new EqualsInt(value, getCurrentIndex()));
         return this;
     }
 
@@ -53,24 +42,39 @@ public class QueryBuilder {
         return this;
     }
 
-    public QueryBuilder where(String key) {
-        queryParts.add(new Where(key));
+    public QueryBuilder where() {
+        queryParts.add(new Where());
         return this;
     }
 
-    public QueryBuilder and(String key) {
-        queryParts.add(new And(key));
+    public QueryBuilder and() {
+        queryParts.add(new And());
         return this;
     }
 
-    public QueryBuilder equalsInt(Integer value) {
-        queryParts.add(new EqualsInt(value, getCurrentIndex()));
+    public QueryBuilder set() {
+        queryParts.add(new Set());
         return this;
     }
 
-    public QueryBuilder equalsString(String value) {
-        queryParts.add(new EqualsString(value, getCurrentIndex()));
+    public QueryBuilder valAsKey(MysqlType valType, Object value, String key) {
+        queryParts.add(new ValKey(valType, value, key, getSeparator(), getCurrentIndex()));
         return this;
+    }
+
+    public QueryBuilder keyIsVal(MysqlType valueType, String key, Object value) {
+        queryParts.add(new KeyVal(valueType, key, value, getSeparator(), getCurrentIndex()));
+        return this;
+    }
+
+    private String getSeparator() {
+        String separator = COMMA;
+
+        if (queryParts.get(queryParts.size() - 1) instanceof KeyWord) {
+            separator = NONE;
+        }
+
+        return separator;
     }
 
     private int getCurrentIndex() {

@@ -1,19 +1,13 @@
 package com.eu.at_it.sql_wrapper.query;
 
-public class Where implements QueryPart {
+public class Where extends KeyWord implements QueryPart {
     static final String WHERE = " WHERE ";
-    private final String key;
 
-    public Where(String key) {
-        this.key = key;
+    public Where() {
     }
 
     @Override
     public String apply(String query) {
-        return query.concat(WHERE).concat(key).concat(" ");
-    }
-
-    public String getKey() {
-        return key;
+        return query.concat(WHERE);
     }
 }

@@ -10,28 +10,34 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyNoInteractions;
 
-class WhereTest {
-    private static final String SOME_QUERY = "SOME_QUERY";
+class InsertTest {
+    private static final String SOME_TABLE = "SOME_TABLE";
+    private static final String SOME_QUERY = "";
 
     @Test
     void apply() {
-        String expectedQuery = SOME_QUERY + Where.WHERE;
+        String expectedQuery = Insert.INSERT_INTO + SOME_TABLE + " ";
 
-        assertEquals(expectedQuery, new Where().apply(SOME_QUERY));
+        assertEquals(expectedQuery, new Insert(SOME_TABLE).apply(SOME_QUERY));
     }
 
     @Test
     void applyOnPreparedStatement() throws SQLException {
         PreparedStatement mockPreparedStatement = mock(PreparedStatement.class);
-        new Where().apply(mockPreparedStatement);
+        new Insert(SOME_TABLE).apply(mockPreparedStatement);
 
         verifyNoInteractions(mockPreparedStatement);
+    }
+
+    @Test
+    void getTableName() {
+        assertEquals(SOME_TABLE, new Insert(SOME_TABLE).getTableName());
     }
 
     @SuppressWarnings("ConstantConditions")
     @Test
     void isKeyWord() {
-        Where where = new Where();
-        assertTrue(where instanceof KeyWord);
+        Insert insert = new Insert(SOME_TABLE);
+        assertTrue(insert instanceof KeyWord);
     }
 }

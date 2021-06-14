@@ -1,6 +1,6 @@
 package com.eu.at_it.sql_wrapper.query;
 
-public class Update implements QueryPart {
+public class Update extends KeyWord implements QueryPart {
     static final String UPDATE = "UPDATE ";
     private final String tableName;
 

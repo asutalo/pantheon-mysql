@@ -6,6 +6,7 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyNoInteractions;
 
@@ -31,5 +32,12 @@ class UpdateTest {
     @Test
     void getTableName() {
         assertEquals(SOME_TABLE, new Update(SOME_TABLE).getTableName());
+    }
+
+    @SuppressWarnings("ConstantConditions")
+    @Test
+    void isKeyWord() {
+        Update update = new Update(SOME_TABLE);
+        assertTrue(update instanceof KeyWord);
     }
 }

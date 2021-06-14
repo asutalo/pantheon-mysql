@@ -11,6 +11,8 @@ import java.sql.SQLException;
 import java.util.LinkedList;
 import java.util.List;
 
+import static com.mysql.cj.MysqlType.INT;
+import static com.mysql.cj.MysqlType.VARCHAR;
 import static org.mockito.Mockito.verify;
 
 
@@ -23,6 +25,7 @@ class QueryBuilderTest {
     private static final String SOME_AND_KEY = "SOME_AND_KEY";
     private static final int SOME_INT_VAL = 1;
     private static final String SOME_STRING_VAL = "SOME_STRING_VAL";
+
     @Mock
     private PreparedStatement mockPreparedStatement;
 
@@ -31,12 +34,12 @@ class QueryBuilderTest {
         String expectedQuery = "SELECT * FROM " + SOME_TABLE + " WHERE " + SOME_WHERE_KEY + " = ? AND " + SOME_AND_KEY + " = ?";
 
         List<QueryPart> actualQueryParts = new QueryBuilder()
-                .select()
+                .selectAll()
                 .from(SOME_TABLE)
-                .where(SOME_WHERE_KEY)
-                .equalsInt(SOME_INT_VAL)
-                .and(SOME_AND_KEY)
-                .equalsString(SOME_STRING_VAL)
+                .where()
+                .keyIsVal(INT, SOME_WHERE_KEY, SOME_INT_VAL)
+                .and()
+                .keyIsVal(VARCHAR, SOME_AND_KEY, SOME_STRING_VAL)
                 .build();
 
         assertQueryPartsList(actualQueryParts);
@@ -45,22 +48,44 @@ class QueryBuilderTest {
 
         Assertions.assertEquals(expectedQuery, actualQuery);
 
-        verify(mockPreparedStatement).setInt(1, SOME_INT_VAL);
-        verify(mockPreparedStatement).setString(2, SOME_STRING_VAL);
+        verify(mockPreparedStatement).setObject(1, SOME_INT_VAL, INT);
+        verify(mockPreparedStatement).setObject(2, SOME_STRING_VAL, VARCHAR);
     }
 
     @Test
-    void buildUpdateQuerySetInt() throws SQLException {
+    void buildInsertQuery() throws SQLException {
+        String expectedQuery = "INSERT INTO " + SOME_TABLE + " SELECT ? AS " + SOME_KEY + ", ? AS " + SOME_OTHER_KEY;
+
+        List<QueryPart> actualQueryParts = new QueryBuilder()
+                .insert(SOME_TABLE)
+                .select()
+                .valAsKey(INT, SOME_INT_VAL, SOME_KEY)
+                .valAsKey(INT, SOME_INT_VAL, SOME_OTHER_KEY)
+                .build();
+
+        assertQueryPartsList(actualQueryParts);
+
+        String actualQuery = prepareQuery(actualQueryParts);
+
+        Assertions.assertEquals(expectedQuery, actualQuery);
+
+        verify(mockPreparedStatement).setObject(1, SOME_INT_VAL, INT);
+        verify(mockPreparedStatement).setObject(2, SOME_INT_VAL, INT);
+    }
+
+    @Test
+    void buildUpdateQuery() throws SQLException {
         String expectedQuery = "UPDATE " + SOME_TABLE + " SET " + SOME_KEY + " = ?, " + SOME_OTHER_KEY + " = ? WHERE " + SOME_WHERE_KEY + " = ? AND " + SOME_AND_KEY + " = ?";
 
         List<QueryPart> actualQueryParts = new QueryBuilder()
                 .update(SOME_TABLE)
-                .setInt(SOME_KEY, SOME_INT_VAL)
-                .stringKeyValue(SOME_OTHER_KEY, SOME_STRING_VAL)
-                .where(SOME_WHERE_KEY)
-                .equalsInt(SOME_INT_VAL)
-                .and(SOME_AND_KEY)
-                .equalsString(SOME_STRING_VAL)
+                .set()
+                .keyIsVal(INT, SOME_KEY, SOME_INT_VAL)
+                .keyIsVal(VARCHAR, SOME_OTHER_KEY, SOME_STRING_VAL)
+                .where()
+                .keyIsVal(INT, SOME_WHERE_KEY, SOME_INT_VAL)
+                .and()
+                .keyIsVal(VARCHAR, SOME_AND_KEY, SOME_STRING_VAL)
                 .build();
 
         assertQueryPartsList(actualQueryParts);
@@ -69,49 +94,23 @@ class QueryBuilderTest {
 
         Assertions.assertEquals(expectedQuery, actualQuery);
 
-        verify(mockPreparedStatement).setInt(1, SOME_INT_VAL);
-        verify(mockPreparedStatement).setString(2, SOME_STRING_VAL);
-        verify(mockPreparedStatement).setInt(3, SOME_INT_VAL);
-        verify(mockPreparedStatement).setString(4, SOME_STRING_VAL);
+        verify(mockPreparedStatement).setObject(1, SOME_INT_VAL, INT);
+        verify(mockPreparedStatement).setObject(2, SOME_STRING_VAL, VARCHAR);
+        verify(mockPreparedStatement).setObject(3, SOME_INT_VAL, INT);
+        verify(mockPreparedStatement).setObject(4, SOME_STRING_VAL, VARCHAR);
     }
 
     @Test
-    void buildUpdateQuerySetString() throws SQLException {
-        String expectedQuery = "UPDATE " + SOME_TABLE + " SET " + SOME_KEY + " = ?, " + SOME_OTHER_KEY + " = ? WHERE " + SOME_WHERE_KEY + " = ? AND " + SOME_AND_KEY + " = ?";
-
-        List<QueryPart> actualQueryParts = new QueryBuilder()
-                .update(SOME_TABLE)
-                .setString(SOME_KEY, SOME_STRING_VAL)
-                .intKeyValue(SOME_OTHER_KEY, SOME_INT_VAL)
-                .where(SOME_WHERE_KEY)
-                .equalsInt(SOME_INT_VAL)
-                .and(SOME_AND_KEY)
-                .equalsString(SOME_STRING_VAL)
-                .build();
-
-        assertQueryPartsList(actualQueryParts);
-
-        String actualQuery = prepareQuery(actualQueryParts);
-
-        Assertions.assertEquals(expectedQuery, actualQuery);
-
-        verify(mockPreparedStatement).setString(1, SOME_STRING_VAL);
-        verify(mockPreparedStatement).setInt(2, SOME_INT_VAL);
-        verify(mockPreparedStatement).setInt(3, SOME_INT_VAL);
-        verify(mockPreparedStatement).setString(4, SOME_STRING_VAL);
-    }
-
-    @Test
-    void buildDelete() throws SQLException {
+    void buildDeleteQuery() throws SQLException {
         String expectedQuery = "DELETE FROM " + SOME_TABLE + " WHERE " + SOME_WHERE_KEY + " = ? AND " + SOME_AND_KEY + " = ?";
 
         List<QueryPart> actualQueryParts = new QueryBuilder()
                 .delete()
                 .from(SOME_TABLE)
-                .where(SOME_WHERE_KEY)
-                .equalsInt(SOME_INT_VAL)
-                .and(SOME_AND_KEY)
-                .equalsString(SOME_STRING_VAL)
+                .where()
+                .keyIsVal(INT, SOME_WHERE_KEY, SOME_INT_VAL)
+                .and()
+                .keyIsVal(VARCHAR, SOME_AND_KEY, SOME_STRING_VAL)
                 .build();
 
         assertQueryPartsList(actualQueryParts);
@@ -120,8 +119,8 @@ class QueryBuilderTest {
 
         Assertions.assertEquals(expectedQuery, actualQuery);
 
-        verify(mockPreparedStatement).setInt(1, SOME_INT_VAL);
-        verify(mockPreparedStatement).setString(2, SOME_STRING_VAL);
+        verify(mockPreparedStatement).setObject(1, SOME_INT_VAL, INT);
+        verify(mockPreparedStatement).setObject(2, SOME_STRING_VAL, VARCHAR);
     }
 
     private String prepareQuery(List<QueryPart> actualQueryParts) throws SQLException {

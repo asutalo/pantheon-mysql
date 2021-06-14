@@ -6,25 +6,31 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyNoInteractions;
 
 class AndTest {
-    private static final String SOME_KEY = "someKey";
-
     @Test
     void apply() {
         String query = "query";
-        String expectedQuery = query + And.AND + SOME_KEY + " ";
+        String expectedQuery = query + And.AND;
 
-        assertEquals(expectedQuery, new And(SOME_KEY).apply(query));
+        assertEquals(expectedQuery, new And().apply(query));
     }
 
     @Test
     void applyOnPreparedStatement() throws SQLException {
         PreparedStatement mockPreparedStatement = mock(PreparedStatement.class);
-        new And(SOME_KEY).apply(mockPreparedStatement);
+        new And().apply(mockPreparedStatement);
 
         verifyNoInteractions(mockPreparedStatement);
+    }
+
+    @SuppressWarnings("ConstantConditions")
+    @Test
+    void isKeyWord() {
+        And and = new And();
+        assertTrue(and instanceof KeyWord);
     }
 }

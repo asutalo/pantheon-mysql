@@ -1,16 +1,17 @@
 package com.eu.at_it.sql_wrapper.query;
 
-public class From extends KeyWord implements QueryPart {
-    static final String FROM = "FROM ";
+public class Insert extends KeyWord implements QueryPart {
+    static final String INSERT_INTO = "INSERT INTO ";
+
     private final String tableName;
 
-    public From(String tableName) {
+    public Insert(String tableName) {
         this.tableName = tableName;
     }
 
     @Override
     public String apply(String query) {
-        return query.concat(FROM).concat(tableName);
+        return query.concat(INSERT_INTO).concat(tableName).concat(" ");
     }
 
     public String getTableName() {
