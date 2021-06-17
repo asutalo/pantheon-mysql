@@ -2,6 +2,7 @@ package com.eu.at_it.sql_wrapper.query;
 
 import com.mysql.cj.MysqlType;
 
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.LinkedList;
@@ -97,10 +98,16 @@ public class QueryBuilder {
         return query;
     }
 
-    public void prepareStatement(PreparedStatement preparedStatement) throws SQLException {
+    public PreparedStatement prepareStatement(Connection connection) throws SQLException {
+        String queryString = buildQueryString();
+
+        PreparedStatement preparedStatement = connection.prepareStatement(queryString);
+
         for (QueryPart queryPart : queryParts) {
             queryPart.apply(preparedStatement);
         }
+
+        return preparedStatement;
     }
 
     private int getCurrentIndex() {

@@ -6,6 +6,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.LinkedList;
@@ -13,9 +14,11 @@ import java.util.List;
 
 import static com.mysql.cj.MysqlType.INT;
 import static com.mysql.cj.MysqlType.VARCHAR;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 
 @ExtendWith(MockitoExtension.class)
@@ -27,6 +30,9 @@ class QueryBuilderTest {
     private static final String SOME_AND_KEY = "SOME_AND_KEY";
     private static final int SOME_INT_VAL = 1;
     private static final String SOME_STRING_VAL = "SOME_STRING_VAL";
+
+    @Mock
+    private Connection mockConnection;
 
     @Mock
     private PreparedStatement mockPreparedStatement;
@@ -100,11 +106,13 @@ class QueryBuilderTest {
     void buildStatement() throws SQLException {
         QueryPart mockQueryPart = mock(QueryPart.class);
         List<QueryPart> mockQueryParts = List.of(mockQueryPart, mockQueryPart);
-
-        QueryBuilder queryBuilder = new QueryBuilder().and();
+        QueryBuilder queryBuilder = new QueryBuilder();
         queryBuilder.setQueryParts(mockQueryParts);
 
-        queryBuilder.prepareStatement(mockPreparedStatement);
+        when(mockQueryPart.apply(anyString())).thenReturn("query");
+        when(mockConnection.prepareStatement(anyString())).thenReturn(mockPreparedStatement);
+
+        queryBuilder.prepareStatement(mockConnection);
 
         verify(mockQueryPart, times(2)).apply(mockPreparedStatement);
     }
