@@ -2,6 +2,8 @@ package com.eu.at_it.sql_wrapper.query;
 
 import com.mysql.cj.MysqlType;
 
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -67,6 +69,15 @@ public class QueryBuilder {
         return this;
     }
 
+    List<QueryPart> getQueryParts() {
+        return queryParts;
+    }
+
+    void setQueryParts(List<QueryPart> queryParts) {
+        this.queryParts.clear();
+        this.queryParts.addAll(queryParts);
+    }
+
     private String getSeparator() {
         String separator = COMMA;
 
@@ -77,12 +88,23 @@ public class QueryBuilder {
         return separator;
     }
 
+    public String buildQueryString() {
+        String query = "";
+        for (QueryPart queryPart : queryParts) {
+            query = queryPart.apply(query);
+        }
+
+        return query;
+    }
+
+    public void prepareStatement(PreparedStatement preparedStatement) throws SQLException {
+        for (QueryPart queryPart : queryParts) {
+            queryPart.apply(preparedStatement);
+        }
+    }
+
     private int getCurrentIndex() {
         paramIndex++;
         return paramIndex;
-    }
-
-    public List<QueryPart> build() {
-        return queryParts;
     }
 }
