@@ -69,7 +69,7 @@ public class QueryBuilder {
         return this;
     }
 
-    List<QueryPart> getQueryParts() {
+    public List<QueryPart> queryParts() {
         return queryParts;
     }
 

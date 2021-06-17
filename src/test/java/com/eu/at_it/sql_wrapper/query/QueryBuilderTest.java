@@ -43,7 +43,7 @@ class QueryBuilderTest {
                 .and()
                 .keyIsVal(VARCHAR, SOME_AND_KEY, SOME_STRING_VAL);
 
-        assertQueryPartsList(queryBuilder.getQueryParts());
+        assertQueryPartsList(queryBuilder.queryParts());
         Assertions.assertEquals(expectedQuery, queryBuilder.buildQueryString());
     }
 
@@ -57,7 +57,7 @@ class QueryBuilderTest {
                 .valAsKey(INT, SOME_INT_VAL, SOME_KEY)
                 .valAsKey(INT, SOME_INT_VAL, SOME_OTHER_KEY);
 
-        assertQueryPartsList(queryBuilder.getQueryParts());
+        assertQueryPartsList(queryBuilder.queryParts());
         Assertions.assertEquals(expectedQuery, queryBuilder.buildQueryString());
     }
 
@@ -75,7 +75,7 @@ class QueryBuilderTest {
                 .and()
                 .keyIsVal(VARCHAR, SOME_AND_KEY, SOME_STRING_VAL);
 
-        assertQueryPartsList(queryBuilder.getQueryParts());
+        assertQueryPartsList(queryBuilder.queryParts());
         Assertions.assertEquals(expectedQuery, queryBuilder.buildQueryString());
     }
 
@@ -91,7 +91,7 @@ class QueryBuilderTest {
                 .and()
                 .keyIsVal(VARCHAR, SOME_AND_KEY, SOME_STRING_VAL);
 
-        assertQueryPartsList(queryBuilder.getQueryParts());
+        assertQueryPartsList(queryBuilder.queryParts());
 
         Assertions.assertEquals(expectedQuery, queryBuilder.buildQueryString());
     }
