@@ -39,4 +39,8 @@ public class KeyVal implements QueryPart {
     public MysqlType getValueType() {
         return targetType;
     }
+
+    public String getKey() {
+        return key;
+    }
 }

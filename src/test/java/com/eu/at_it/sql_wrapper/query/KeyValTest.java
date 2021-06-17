@@ -45,4 +45,9 @@ class KeyValTest {
     void getValueType() {
         assertEquals(SOME_TYPE, keyVal.getValueType());
     }
+
+    @Test
+    void getKey() {
+        assertEquals(SOME_KEY, keyVal.getKey());
+    }
 }
