@@ -2,33 +2,49 @@ package com.eu.at_it.sql_wrapper.client;
 
 import com.eu.at_it.sql_wrapper.query.QueryBuilder;
 
-import javax.sql.rowset.CachedRowSet;
 import javax.sql.rowset.RowSetFactory;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.function.Function;
 
 public class MySqlClient {
     private final Connector connector;
-    private final RowSetFactory rowSetFactory;
+    private final SelectQueryResultProcessorFunction selectQueryResultProcessorFunction;
+    private final InsertQueryResultProcessorFunction insertQueryResultProcessorFunction;
+    private final OtherDmlQueryResultProcessorFunction otherDmlQueryResultProcessorFunction;
 
     public MySqlClient(Connector connector, RowSetFactory rowSetFactory) {
         this.connector = connector;
-        this.rowSetFactory = rowSetFactory;
+
+        CachedRowSetConversionFunction cachedRowSetConversionFunction = new CachedRowSetConversionFunction(rowSetFactory);
+
+        selectQueryResultProcessorFunction = new SelectQueryResultProcessorFunction(cachedRowSetConversionFunction);
+        insertQueryResultProcessorFunction = new InsertQueryResultProcessorFunction(cachedRowSetConversionFunction);
+        otherDmlQueryResultProcessorFunction = new OtherDmlQueryResultProcessorFunction();
+
     }
 
-    public ResultSet prepAndExecute(QueryBuilder queryBuilder) throws SQLException {
+    public ResultSet prepAndExecuteSelectQuery(QueryBuilder queryBuilder) throws SQLException {
+        return execute(queryBuilder, selectQueryResultProcessorFunction);
+    }
+
+    public ResultSet prepAndExecuteInsertQuery(QueryBuilder queryBuilder) throws SQLException {
+        return execute(queryBuilder, insertQueryResultProcessorFunction);
+    }
+
+    public int prepAndExecuteOtherDmlQuery(QueryBuilder queryBuilder) throws SQLException {
+        return execute(queryBuilder, otherDmlQueryResultProcessorFunction);
+    }
+
+    <T> T execute(QueryBuilder queryBuilder, Function<PreparedStatement, T> preparedStatementExecutor) throws SQLException {
         Connection connection = connector.connect();
-        CachedRowSet cachedRowSet = rowSetFactory.createCachedRowSet();
-
         PreparedStatement preparedStatement = queryBuilder.prepareStatement(connection);
-
-        cachedRowSet.populate(preparedStatement.executeQuery());
-
+        T apply = preparedStatementExecutor.apply(preparedStatement);
         preparedStatement.close();
         connector.close(connection);
 
-        return cachedRowSet;
+        return apply;
     }
 }
