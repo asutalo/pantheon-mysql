@@ -1,7 +1,5 @@
 package com.eu.at_it.sql_wrapper.query;
 
-import com.mysql.cj.MysqlType;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -19,14 +17,9 @@ public class QueryBuilder {
         return this;
     }
 
-    public QueryBuilder selectAll() {
-        queryParts.add(new Select());
-        queryParts.add(new All());
-        return this;
-    }
-
-    public QueryBuilder insert(String tableName) {
-        queryParts.add(new Insert(tableName));
+    public QueryBuilder insert(String tableName, List<MySqlValue> values) {
+        injectIndexes(values);
+        queryParts.add(new Insert(tableName, values));
         return this;
     }
 
@@ -35,8 +28,9 @@ public class QueryBuilder {
         return this;
     }
 
-    public QueryBuilder update(String tableName) {
-        queryParts.add(new Update(tableName));
+    public QueryBuilder update(String tableName, List<MySqlValue> values) {
+        injectIndexes(values);
+        queryParts.add(new Update(tableName, values));
         return this;
     }
 
@@ -55,23 +49,9 @@ public class QueryBuilder {
         return this;
     }
 
-    public QueryBuilder set() {
-        queryParts.add(new Set());
+    public QueryBuilder keyIsVal(MySqlValue value) {
+        queryParts.add(new KeyVal(value.getMysqlType(), value.getKey(), value.getValue(), getSeparator(), getCurrentIndex()));
         return this;
-    }
-
-    public QueryBuilder valAsKey(MysqlType valType, Object value, String key) {
-        queryParts.add(new ValKey(valType, value, key, getSeparator(), getCurrentIndex()));
-        return this;
-    }
-
-    public QueryBuilder keyIsVal(MysqlType valueType, String key, Object value) {
-        queryParts.add(new KeyVal(valueType, key, value, getSeparator(), getCurrentIndex()));
-        return this;
-    }
-
-    public List<QueryPart> queryParts() {
-        return queryParts;
     }
 
     void setQueryParts(List<QueryPart> queryParts) {
@@ -95,7 +75,7 @@ public class QueryBuilder {
             query = queryPart.apply(query);
         }
 
-        return query;
+        return query.concat(";");
     }
 
     public PreparedStatement prepareStatement(Connection connection) throws SQLException {
@@ -113,5 +93,9 @@ public class QueryBuilder {
     private int getCurrentIndex() {
         paramIndex++;
         return paramIndex;
+    }
+
+    private void injectIndexes(List<MySqlValue> values) {
+        values.forEach(value -> value.setParamIndex(getCurrentIndex()));
     }
 }

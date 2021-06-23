@@ -9,13 +9,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.util.LinkedList;
 import java.util.List;
 
 import static com.mysql.cj.MysqlType.INT;
-import static com.mysql.cj.MysqlType.VARCHAR;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -25,11 +25,9 @@ import static org.mockito.Mockito.when;
 class QueryBuilderTest {
     public static final String SOME_KEY = "SOME_KEY";
     public static final String SOME_OTHER_KEY = "SOME_OTHER_KEY";
+    public static final String ADDITIONAL_KEY = "KEY";
     private static final String SOME_TABLE = "SOME_TABLE";
     private static final String SOME_WHERE_KEY = "SOME_WHERE_KEY";
-    private static final String SOME_AND_KEY = "SOME_AND_KEY";
-    private static final int SOME_INT_VAL = 1;
-    private static final String SOME_STRING_VAL = "SOME_STRING_VAL";
 
     @Mock
     private Connection mockConnection;
@@ -37,68 +35,79 @@ class QueryBuilderTest {
     @Mock
     private PreparedStatement mockPreparedStatement;
 
+    @Mock
+    private MySqlValue mockMySqlValue;
+
     @Test
     void buildSelectQuery() {
-        String expectedQuery = "SELECT * FROM " + SOME_TABLE + " WHERE " + SOME_WHERE_KEY + " = ? AND " + SOME_AND_KEY + " = ?";
+        String expectedQuery = String.format("SELECT * FROM %s WHERE %s = ? AND %s = ?;", SOME_TABLE, SOME_WHERE_KEY, SOME_OTHER_KEY);
+        when(mockMySqlValue.getKey()).thenReturn(SOME_WHERE_KEY).thenReturn(SOME_OTHER_KEY);
 
         QueryBuilder queryBuilder = new QueryBuilder()
-                .selectAll()
+                .select()
                 .from(SOME_TABLE)
                 .where()
-                .keyIsVal(INT, SOME_WHERE_KEY, SOME_INT_VAL)
+                .keyIsVal(mockMySqlValue)
                 .and()
-                .keyIsVal(VARCHAR, SOME_AND_KEY, SOME_STRING_VAL);
+                .keyIsVal(mockMySqlValue);
 
-        assertQueryPartsList(queryBuilder.queryParts());
         Assertions.assertEquals(expectedQuery, queryBuilder.buildQueryString());
+        verify(mockMySqlValue, never()).setParamIndex(anyInt());
     }
 
     @Test
     void buildInsertQuery() {
-        String expectedQuery = "INSERT INTO " + SOME_TABLE + " SELECT ? AS " + SOME_KEY + ", ? AS " + SOME_OTHER_KEY;
+        String expectedQuery = String.format("INSERT INTO %s (%s, %s) VALUES (?, ?);", SOME_TABLE, SOME_WHERE_KEY, SOME_OTHER_KEY);
+        when(mockMySqlValue.getKey()).thenReturn(SOME_WHERE_KEY).thenReturn(SOME_OTHER_KEY);
 
         QueryBuilder queryBuilder = new QueryBuilder()
-                .insert(SOME_TABLE)
-                .select()
-                .valAsKey(INT, SOME_INT_VAL, SOME_KEY)
-                .valAsKey(INT, SOME_INT_VAL, SOME_OTHER_KEY);
+                .insert(SOME_TABLE, List.of(mockMySqlValue, mockMySqlValue));
 
-        assertQueryPartsList(queryBuilder.queryParts());
         Assertions.assertEquals(expectedQuery, queryBuilder.buildQueryString());
+        verify(mockMySqlValue).setParamIndex(1);
+        verify(mockMySqlValue).setParamIndex(2);
+
     }
 
     @Test
     void buildUpdateQuery() {
-        String expectedQuery = "UPDATE " + SOME_TABLE + " SET " + SOME_KEY + " = ?, " + SOME_OTHER_KEY + " = ? WHERE " + SOME_WHERE_KEY + " = ? AND " + SOME_AND_KEY + " = ?";
+        String expectedQuery = String.format("UPDATE %s SET %s = ?, %s = ? WHERE %s = ? AND %s = ?;", SOME_TABLE, SOME_KEY, SOME_OTHER_KEY, SOME_WHERE_KEY, ADDITIONAL_KEY);
+
+        MySqlValue mySqlValue = new MySqlValue(INT, SOME_KEY, 2);
+        MySqlValue mySqlValue1 = new MySqlValue(INT, SOME_OTHER_KEY, 2);
+        MySqlValue mySqlValue2 = new MySqlValue(INT, SOME_WHERE_KEY, 3);
+        MySqlValue mySqlValue3 = new MySqlValue(INT, ADDITIONAL_KEY, 4);
 
         QueryBuilder queryBuilder = new QueryBuilder()
-                .update(SOME_TABLE)
-                .set()
-                .keyIsVal(INT, SOME_KEY, SOME_INT_VAL)
-                .keyIsVal(VARCHAR, SOME_OTHER_KEY, SOME_STRING_VAL)
+                .update(SOME_TABLE, List.of(mySqlValue, mySqlValue1))
                 .where()
-                .keyIsVal(INT, SOME_WHERE_KEY, SOME_INT_VAL)
+                .keyIsVal(mySqlValue2)
                 .and()
-                .keyIsVal(VARCHAR, SOME_AND_KEY, SOME_STRING_VAL);
+                .keyIsVal(mySqlValue3);
 
-        assertQueryPartsList(queryBuilder.queryParts());
+
         Assertions.assertEquals(expectedQuery, queryBuilder.buildQueryString());
+        Assertions.assertEquals(1, mySqlValue.getParamIndex());
+        Assertions.assertEquals(2, mySqlValue1.getParamIndex());
+        Assertions.assertEquals(0, mySqlValue2.getParamIndex());
+        Assertions.assertEquals(0, mySqlValue3.getParamIndex());
     }
 
     @Test
     void buildDeleteQuery() {
-        String expectedQuery = "DELETE FROM " + SOME_TABLE + " WHERE " + SOME_WHERE_KEY + " = ? AND " + SOME_AND_KEY + " = ?";
+        String expectedQuery = String.format("DELETE FROM %s WHERE %s = ? AND %s = ?;", SOME_TABLE, SOME_WHERE_KEY, SOME_OTHER_KEY);
+
+        when(mockMySqlValue.getKey()).thenReturn(SOME_WHERE_KEY).thenReturn(SOME_OTHER_KEY);
 
         QueryBuilder queryBuilder = new QueryBuilder()
                 .delete()
                 .from(SOME_TABLE)
                 .where()
-                .keyIsVal(INT, SOME_WHERE_KEY, SOME_INT_VAL)
+                .keyIsVal(mockMySqlValue)
                 .and()
-                .keyIsVal(VARCHAR, SOME_AND_KEY, SOME_STRING_VAL);
+                .keyIsVal(mockMySqlValue);
 
-        assertQueryPartsList(queryBuilder.queryParts());
-
+        verify(mockMySqlValue, never()).setParamIndex(anyInt());
         Assertions.assertEquals(expectedQuery, queryBuilder.buildQueryString());
     }
 
@@ -115,10 +124,5 @@ class QueryBuilderTest {
         queryBuilder.prepareStatement(mockConnection);
 
         verify(mockQueryPart, times(2)).apply(mockPreparedStatement);
-    }
-
-    private void assertQueryPartsList(List<QueryPart> actualQueryParts) {
-        Assertions.assertNotNull(actualQueryParts);
-        Assertions.assertEquals(LinkedList.class, actualQueryParts.getClass());
     }
 }
