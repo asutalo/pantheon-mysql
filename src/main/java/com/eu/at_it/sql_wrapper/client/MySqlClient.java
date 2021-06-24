@@ -21,7 +21,7 @@ public class MySqlClient {
         CachedRowSetConversionFunction cachedRowSetConversionFunction = new CachedRowSetConversionFunction(rowSetFactory);
 
         selectQueryResultProcessorFunction = new SelectQueryResultProcessorFunction(cachedRowSetConversionFunction);
-        insertQueryResultProcessorFunction = new InsertQueryResultProcessorFunction(cachedRowSetConversionFunction);
+        insertQueryResultProcessorFunction = new InsertQueryResultProcessorFunction();
         otherDmlQueryResultProcessorFunction = new OtherDmlQueryResultProcessorFunction();
 
     }
@@ -30,7 +30,7 @@ public class MySqlClient {
         return execute(queryBuilder, selectQueryResultProcessorFunction);
     }
 
-    public ResultSet prepAndExecuteInsertQuery(QueryBuilder queryBuilder) throws SQLException {
+    public int prepAndExecuteInsertQuery(QueryBuilder queryBuilder) throws SQLException {
         return execute(queryBuilder, insertQueryResultProcessorFunction);
     }
 

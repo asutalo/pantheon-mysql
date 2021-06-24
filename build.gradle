@@ -9,7 +9,7 @@ repositories {
 
 group 'com.eu.atit'
 
-version = "0.0.9"
+version = "0.0.10"
 
 apply plugin: "java"
 apply plugin: 'maven'

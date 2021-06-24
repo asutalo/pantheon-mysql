@@ -60,12 +60,13 @@ class MySqlClientTest {
     void prepAndExecuteInsertQuery_InsertQueryResultProcessorFunction() throws SQLException {
         MySqlClient spy = spy(mySqlClient);
 
-        doReturn(mockResultSet).when(spy).execute(any(), any());
+        int expected = 1;
+        doReturn(expected).when(spy).execute(any(), any());
 
-        ResultSet actual = spy.prepAndExecuteInsertQuery(mockQueryBuilder);
+        int actual = spy.prepAndExecuteInsertQuery(mockQueryBuilder);
 
         verify(spy).execute(eq(mockQueryBuilder), any(InsertQueryResultProcessorFunction.class));
-        assertEquals(mockResultSet, actual);
+        assertEquals(expected, actual);
     }
 
     @Test

@@ -3,20 +3,23 @@ package com.eu.at_it.sql_wrapper.client;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.function.Function;
 
-class InsertQueryResultProcessorFunction implements Function<PreparedStatement, ResultSet> {
-    private final CachedRowSetConversionFunction cachedRowSetConversionFunction;
-
-    InsertQueryResultProcessorFunction(CachedRowSetConversionFunction cachedRowSetConversionFunction) {
-        this.cachedRowSetConversionFunction = cachedRowSetConversionFunction;
-    }
+class InsertQueryResultProcessorFunction implements Function<PreparedStatement, Integer> {
 
     @Override
-    public ResultSet apply(PreparedStatement preparedStatement) {
+    public Integer apply(PreparedStatement preparedStatement) {
         try {
-            preparedStatement.executeUpdate();
-            return cachedRowSetConversionFunction.apply(preparedStatement.getGeneratedKeys());
+            if (preparedStatement.executeUpdate() > 0) {
+                ResultSet generatedKeys = preparedStatement.getGeneratedKeys();
+
+                generatedKeys.next();
+
+                return generatedKeys.getInt(Statement.RETURN_GENERATED_KEYS);
+            } else {
+                throw new RuntimeException("Insert failed, no rows inserted");
+            }
         } catch (SQLException sqlException) {
             throw new RuntimeException(sqlException);
         }
