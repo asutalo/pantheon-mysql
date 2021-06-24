@@ -3,6 +3,7 @@ package com.eu.at_it.sql_wrapper.query;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -81,7 +82,7 @@ public class QueryBuilder {
     public PreparedStatement prepareStatement(Connection connection) throws SQLException {
         String queryString = buildQueryString();
 
-        PreparedStatement preparedStatement = connection.prepareStatement(queryString);
+        PreparedStatement preparedStatement = connection.prepareStatement(queryString, Statement.RETURN_GENERATED_KEYS);
 
         for (QueryPart queryPart : queryParts) {
             queryPart.apply(preparedStatement);

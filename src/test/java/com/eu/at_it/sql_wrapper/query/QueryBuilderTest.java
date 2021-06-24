@@ -9,11 +9,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.List;
 
 import static com.mysql.cj.MysqlType.INT;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -119,7 +121,7 @@ class QueryBuilderTest {
         queryBuilder.setQueryParts(mockQueryParts);
 
         when(mockQueryPart.apply(anyString())).thenReturn("query");
-        when(mockConnection.prepareStatement(anyString())).thenReturn(mockPreparedStatement);
+        when(mockConnection.prepareStatement(anyString(), eq(Statement.RETURN_GENERATED_KEYS))).thenReturn(mockPreparedStatement);
 
         queryBuilder.prepareStatement(mockConnection);
 
