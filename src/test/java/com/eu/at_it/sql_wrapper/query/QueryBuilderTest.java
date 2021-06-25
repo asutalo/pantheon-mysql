@@ -45,13 +45,13 @@ class QueryBuilderTest {
         String expectedQuery = String.format("SELECT * FROM %s WHERE %s = ? AND %s = ?;", SOME_TABLE, SOME_WHERE_KEY, SOME_OTHER_KEY);
         when(mockMySqlValue.getKey()).thenReturn(SOME_WHERE_KEY).thenReturn(SOME_OTHER_KEY);
 
-        QueryBuilder queryBuilder = new QueryBuilder()
-                .select()
-                .from(SOME_TABLE)
-                .where()
-                .keyIsVal(mockMySqlValue)
-                .and()
-                .keyIsVal(mockMySqlValue);
+        QueryBuilder queryBuilder = new QueryBuilder();
+        queryBuilder.select();
+        queryBuilder.from(SOME_TABLE);
+        queryBuilder.where();
+        queryBuilder.keyIsVal(mockMySqlValue);
+        queryBuilder.and();
+        queryBuilder.keyIsVal(mockMySqlValue);
 
         Assertions.assertEquals(expectedQuery, queryBuilder.buildQueryString());
         verify(mockMySqlValue, never()).setParamIndex(anyInt());
@@ -62,8 +62,8 @@ class QueryBuilderTest {
         String expectedQuery = String.format("INSERT INTO %s (%s, %s) VALUES (?, ?);", SOME_TABLE, SOME_WHERE_KEY, SOME_OTHER_KEY);
         when(mockMySqlValue.getKey()).thenReturn(SOME_WHERE_KEY).thenReturn(SOME_OTHER_KEY);
 
-        QueryBuilder queryBuilder = new QueryBuilder()
-                .insert(SOME_TABLE, List.of(mockMySqlValue, mockMySqlValue));
+        QueryBuilder queryBuilder = new QueryBuilder();
+        queryBuilder.insert(SOME_TABLE, List.of(mockMySqlValue, mockMySqlValue));
 
         Assertions.assertEquals(expectedQuery, queryBuilder.buildQueryString());
         verify(mockMySqlValue).setParamIndex(1);
@@ -80,12 +80,12 @@ class QueryBuilderTest {
         MySqlValue mySqlValue2 = new MySqlValue(INT, SOME_WHERE_KEY, 3);
         MySqlValue mySqlValue3 = new MySqlValue(INT, ADDITIONAL_KEY, 4);
 
-        QueryBuilder queryBuilder = new QueryBuilder()
-                .update(SOME_TABLE, List.of(mySqlValue, mySqlValue1))
-                .where()
-                .keyIsVal(mySqlValue2)
-                .and()
-                .keyIsVal(mySqlValue3);
+        QueryBuilder queryBuilder = new QueryBuilder();
+        queryBuilder.update(SOME_TABLE, List.of(mySqlValue, mySqlValue1));
+        queryBuilder.where();
+        queryBuilder.keyIsVal(mySqlValue2);
+        queryBuilder.and();
+        queryBuilder.keyIsVal(mySqlValue3);
 
 
         Assertions.assertEquals(expectedQuery, queryBuilder.buildQueryString());
@@ -101,13 +101,13 @@ class QueryBuilderTest {
 
         when(mockMySqlValue.getKey()).thenReturn(SOME_WHERE_KEY).thenReturn(SOME_OTHER_KEY);
 
-        QueryBuilder queryBuilder = new QueryBuilder()
-                .delete()
-                .from(SOME_TABLE)
-                .where()
-                .keyIsVal(mockMySqlValue)
-                .and()
-                .keyIsVal(mockMySqlValue);
+        QueryBuilder queryBuilder = new QueryBuilder();
+        queryBuilder.delete();
+        queryBuilder.from(SOME_TABLE);
+        queryBuilder.where();
+        queryBuilder.keyIsVal(mockMySqlValue);
+        queryBuilder.and();
+        queryBuilder.keyIsVal(mockMySqlValue);
 
         verify(mockMySqlValue, never()).setParamIndex(anyInt());
         Assertions.assertEquals(expectedQuery, queryBuilder.buildQueryString());

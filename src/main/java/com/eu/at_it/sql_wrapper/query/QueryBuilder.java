@@ -13,46 +13,38 @@ public class QueryBuilder {
     private final List<QueryPart> queryParts = new LinkedList<>();
     private int paramIndex = 0;
 
-    public QueryBuilder select() {
+    public void select() {
         queryParts.add(new Select());
-        return this;
     }
 
-    public QueryBuilder insert(String tableName, List<MySqlValue> values) {
+    public void insert(String tableName, List<MySqlValue> values) {
         injectIndexes(values);
         queryParts.add(new Insert(tableName, values));
-        return this;
     }
 
-    public QueryBuilder delete() {
+    public void delete() {
         queryParts.add(new Delete());
-        return this;
     }
 
-    public QueryBuilder update(String tableName, List<MySqlValue> values) {
+    public void update(String tableName, List<MySqlValue> values) {
         injectIndexes(values);
         queryParts.add(new Update(tableName, values));
-        return this;
     }
 
-    public QueryBuilder from(String tableName) {
+    public void from(String tableName) {
         queryParts.add(new From(tableName));
-        return this;
     }
 
-    public QueryBuilder where() {
+    public void where() {
         queryParts.add(new Where());
-        return this;
     }
 
-    public QueryBuilder and() {
+    public void and() {
         queryParts.add(new And());
-        return this;
     }
 
-    public QueryBuilder keyIsVal(MySqlValue value) {
+    public void keyIsVal(MySqlValue value) {
         queryParts.add(new KeyVal(value.getMysqlType(), value.getKey(), value.getValue(), getSeparator(), getCurrentIndex()));
-        return this;
     }
 
     void setQueryParts(List<QueryPart> queryParts) {
