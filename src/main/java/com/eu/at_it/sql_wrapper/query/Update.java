@@ -2,7 +2,9 @@ package com.eu.at_it.sql_wrapper.query;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class Update implements QueryPart {
@@ -10,7 +12,7 @@ public class Update implements QueryPart {
     private final String tableName;
     private final List<MySqlValue> values;
 
-    public Update(String tableName, List<MySqlValue> values) {
+    public Update(String tableName, LinkedList<MySqlValue> values) {
         this.tableName = tableName;
         this.values = values;
     }
@@ -35,5 +37,18 @@ public class Update implements QueryPart {
 
     public List<MySqlValue> getValues() {
         return values;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Update update = (Update) o;
+        return Objects.equals(tableName, update.tableName) && Objects.equals(values, update.values);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(tableName, values);
     }
 }

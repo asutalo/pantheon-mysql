@@ -10,7 +10,7 @@ import java.sql.SQLException;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyNoInteractions;
 
-class QueryBuilderPartTest {
+class QueryPartTest {
     @Test
     void defaultApply() throws SQLException {
         QueryPart queryPart = mock(QueryPart.class, Mockito.CALLS_REAL_METHODS);

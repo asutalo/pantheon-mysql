@@ -3,6 +3,7 @@ package com.eu.at_it.sql_wrapper.client;
 import java.sql.Connection;
 import java.sql.Driver;
 import java.sql.SQLException;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
 
@@ -13,7 +14,7 @@ public class Connector {
     private final String jdbcRootUrl;
     private final List<String> dbParams;
 
-    public Connector(Driver jdbcDriver, String jdbcRootUrl, List<String> dbParams) {
+    public Connector(Driver jdbcDriver, String jdbcRootUrl, LinkedList<String> dbParams) {
         this.jdbcDriver = jdbcDriver;
         this.jdbcRootUrl = jdbcRootUrl;
         this.dbParams = dbParams;

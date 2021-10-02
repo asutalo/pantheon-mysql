@@ -1,5 +1,7 @@
 package com.eu.at_it.sql_wrapper.query;
 
+import java.util.Objects;
+
 public class From extends KeyWord implements QueryPart {
     static final String FROM = "FROM ";
     private final String tableName;
@@ -15,5 +17,18 @@ public class From extends KeyWord implements QueryPart {
 
     public String getTableName() {
         return tableName;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        From from = (From) o;
+        return Objects.equals(tableName, from.tableName);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(tableName);
     }
 }

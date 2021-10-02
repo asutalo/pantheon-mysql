@@ -1,6 +1,7 @@
 package com.eu.at_it.sql_wrapper.query;
 
 import com.mysql.cj.MysqlType;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.sql.PreparedStatement;
@@ -18,7 +19,7 @@ class KeyValTest {
     private static final String SOME_SEPARATOR = ",";
     private static final MysqlType SOME_TYPE = VARCHAR;
 
-    private final KeyVal keyVal = new KeyVal(SOME_TYPE, SOME_KEY, SOME_VALUE, SOME_SEPARATOR, SOME_INDEX);
+    private final KeyVal keyVal = keyVal();
 
     @Test
     void applyToString() {
@@ -49,5 +50,24 @@ class KeyValTest {
     @Test
     void getKey() {
         assertEquals(SOME_KEY, keyVal.getKey());
+    }
+
+    @Test
+    void equals() {
+        KeyVal keyVal1 = keyVal();
+        KeyVal keyVal2 = keyVal();
+
+        Assertions.assertEquals(keyVal1, keyVal2);
+    }
+
+    @Test
+    void hashcode() {
+        KeyVal KeyVal = keyVal();
+
+        Assertions.assertEquals(KeyVal.hashCode(), KeyVal.hashCode());
+    }
+
+    private KeyVal keyVal() {
+        return new KeyVal(SOME_TYPE, SOME_KEY, SOME_VALUE, SOME_SEPARATOR, SOME_INDEX);
     }
 }

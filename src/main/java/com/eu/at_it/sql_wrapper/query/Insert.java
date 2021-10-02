@@ -2,7 +2,9 @@ package com.eu.at_it.sql_wrapper.query;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class Insert implements QueryPart {
@@ -11,7 +13,7 @@ public class Insert implements QueryPart {
     private final String tableName;
     private final List<MySqlValue> values;
 
-    public Insert(String tableName, List<MySqlValue> values) {
+    public Insert(String tableName, LinkedList<MySqlValue> values) {
         this.tableName = tableName;
         this.values = values;
     }
@@ -42,5 +44,18 @@ public class Insert implements QueryPart {
 
     public List<MySqlValue> getValues() {
         return values;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Insert insert = (Insert) o;
+        return Objects.equals(tableName, insert.tableName) && Objects.equals(values, insert.values);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(tableName, values);
     }
 }

@@ -6,6 +6,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 
 public class QueryBuilder {
     private static final String NONE = "";
@@ -17,7 +18,7 @@ public class QueryBuilder {
         queryParts.add(new Select());
     }
 
-    public void insert(String tableName, List<MySqlValue> values) {
+    public void insert(String tableName, LinkedList<MySqlValue> values) {
         injectIndexes(values);
         queryParts.add(new Insert(tableName, values));
     }
@@ -26,7 +27,7 @@ public class QueryBuilder {
         queryParts.add(new Delete());
     }
 
-    public void update(String tableName, List<MySqlValue> values) {
+    public void update(String tableName, LinkedList<MySqlValue> values) {
         injectIndexes(values);
         queryParts.add(new Update(tableName, values));
     }
@@ -90,5 +91,18 @@ public class QueryBuilder {
 
     private void injectIndexes(List<MySqlValue> values) {
         values.forEach(value -> value.setParamIndex(getCurrentIndex()));
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        QueryBuilder that = (QueryBuilder) o;
+        return paramIndex == that.paramIndex && Objects.equals(queryParts, that.queryParts);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(queryParts, paramIndex);
     }
 }

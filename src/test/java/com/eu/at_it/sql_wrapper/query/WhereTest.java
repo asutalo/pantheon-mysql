@@ -1,5 +1,6 @@
 package com.eu.at_it.sql_wrapper.query;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.sql.PreparedStatement;
@@ -33,5 +34,20 @@ class WhereTest {
     void isKeyWord() {
         Where where = new Where();
         assertTrue(where instanceof KeyWord);
+    }
+
+    @Test
+    void equals() {
+        Where where1 = new Where();
+        Where where2 = new Where();
+
+        Assertions.assertEquals(where1, where2);
+    }
+
+    @Test
+    void hashcode() {
+        Where where = new Where();
+
+        Assertions.assertEquals(where.hashCode(), where.hashCode());
     }
 }

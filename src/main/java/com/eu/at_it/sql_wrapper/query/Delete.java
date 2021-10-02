@@ -7,4 +7,15 @@ public class Delete extends KeyWord implements QueryPart {
     public String apply(String query) {
         return query.concat(DELETE);
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        return o != null && getClass() == o.getClass();
+    }
+
+    @Override
+    public int hashCode() {
+        return 0;
+    }
 }

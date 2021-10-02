@@ -1,5 +1,6 @@
 package com.eu.at_it.sql_wrapper.query;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.sql.PreparedStatement;
@@ -32,5 +33,20 @@ class AndTest {
     void isKeyWord() {
         And and = new And();
         assertTrue(and instanceof KeyWord);
+    }
+
+    @Test
+    void equals() {
+        And and1 = new And();
+        And and2 = new And();
+
+        Assertions.assertEquals(and1, and2);
+    }
+
+    @Test
+    void hashcode() {
+        And and = new And();
+
+        Assertions.assertEquals(and.hashCode(), and.hashCode());
     }
 }

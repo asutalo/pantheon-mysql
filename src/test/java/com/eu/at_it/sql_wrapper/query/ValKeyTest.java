@@ -1,6 +1,7 @@
 package com.eu.at_it.sql_wrapper.query;
 
 import com.mysql.cj.MysqlType;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.sql.PreparedStatement;
@@ -18,7 +19,7 @@ class ValKeyTest {
     private static final String SOME_SEPARATOR = ",";
     private static final MysqlType SOME_TYPE = VARCHAR;
 
-    private final ValKey valKey = new ValKey(SOME_TYPE, SOME_VALUE, SOME_KEY, SOME_SEPARATOR, SOME_INDEX);
+    private final ValKey valKey = valKey();
 
     @Test
     void applyToString() {
@@ -44,5 +45,25 @@ class ValKeyTest {
     @Test
     void getValueType() {
         assertEquals(SOME_TYPE, valKey.getValueType());
+    }
+
+
+    @Test
+    void equals() {
+        ValKey valKey1 = valKey();
+        ValKey valKey2 = valKey();
+
+        Assertions.assertEquals(valKey1, valKey2);
+    }
+
+    @Test
+    void hashcode() {
+        ValKey valKey = valKey();
+
+        Assertions.assertEquals(valKey.hashCode(), valKey.hashCode());
+    }
+
+    private ValKey valKey() {
+        return new ValKey(SOME_TYPE, SOME_VALUE, SOME_KEY, SOME_SEPARATOR, SOME_INDEX);
     }
 }

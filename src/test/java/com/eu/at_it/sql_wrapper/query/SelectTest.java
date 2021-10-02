@@ -1,5 +1,6 @@
 package com.eu.at_it.sql_wrapper.query;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.sql.PreparedStatement;
@@ -33,5 +34,20 @@ class SelectTest {
     void isKeyWord() {
         Select select = new Select();
         assertTrue(select instanceof KeyWord);
+    }
+
+    @Test
+    void equals() {
+        Select select1 = new Select();
+        Select select2 = new Select();
+
+        Assertions.assertEquals(select1, select2);
+    }
+
+    @Test
+    void hashcode() {
+        Select select = new Select();
+
+        Assertions.assertEquals(select.hashCode(), select.hashCode());
     }
 }

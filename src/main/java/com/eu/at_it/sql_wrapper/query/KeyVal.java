@@ -4,6 +4,7 @@ import com.mysql.cj.MysqlType;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.Objects;
 
 public class KeyVal implements QueryPart {
     static final String VAL = " = ?";
@@ -42,5 +43,18 @@ public class KeyVal implements QueryPart {
 
     public String getKey() {
         return key;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        KeyVal keyVal = (KeyVal) o;
+        return index == keyVal.index && Objects.equals(value, keyVal.value) && Objects.equals(key, keyVal.key) && Objects.equals(separator, keyVal.separator) && targetType == keyVal.targetType;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(value, key, separator, index, targetType);
     }
 }

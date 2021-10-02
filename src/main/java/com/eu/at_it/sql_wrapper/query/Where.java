@@ -10,4 +10,15 @@ public class Where extends KeyWord implements QueryPart {
     public String apply(String query) {
         return query.concat(WHERE);
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        return o != null && getClass() == o.getClass();
+    }
+
+    @Override
+    public int hashCode() {
+        return 0;
+    }
 }

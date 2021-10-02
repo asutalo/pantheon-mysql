@@ -9,10 +9,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.sql.Statement;
+import java.util.LinkedList;
 import java.util.List;
 
 import static com.mysql.cj.MysqlType.INT;
+import static java.sql.Statement.RETURN_GENERATED_KEYS;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -63,7 +64,7 @@ class QueryBuilderTest {
         when(mockMySqlValue.getKey()).thenReturn(SOME_WHERE_KEY).thenReturn(SOME_OTHER_KEY);
 
         QueryBuilder queryBuilder = new QueryBuilder();
-        queryBuilder.insert(SOME_TABLE, List.of(mockMySqlValue, mockMySqlValue));
+        queryBuilder.insert(SOME_TABLE, new LinkedList<>(List.of(mockMySqlValue, mockMySqlValue)));
 
         Assertions.assertEquals(expectedQuery, queryBuilder.buildQueryString());
         verify(mockMySqlValue).setParamIndex(1);
@@ -81,7 +82,7 @@ class QueryBuilderTest {
         MySqlValue mySqlValue3 = new MySqlValue(INT, ADDITIONAL_KEY, 4);
 
         QueryBuilder queryBuilder = new QueryBuilder();
-        queryBuilder.update(SOME_TABLE, List.of(mySqlValue, mySqlValue1));
+        queryBuilder.update(SOME_TABLE, new LinkedList<>(List.of(mySqlValue, mySqlValue1)));
         queryBuilder.where();
         queryBuilder.keyIsVal(mySqlValue2);
         queryBuilder.and();
@@ -116,15 +117,50 @@ class QueryBuilderTest {
     @Test
     void buildStatement() throws SQLException {
         QueryPart mockQueryPart = mock(QueryPart.class);
-        List<QueryPart> mockQueryParts = List.of(mockQueryPart, mockQueryPart);
+        List<QueryPart> mockQueryParts = new LinkedList<>(List.of(mockQueryPart, mockQueryPart));
         QueryBuilder queryBuilder = new QueryBuilder();
         queryBuilder.setQueryParts(mockQueryParts);
 
         when(mockQueryPart.apply(anyString())).thenReturn("query");
-        when(mockConnection.prepareStatement(anyString(), eq(Statement.RETURN_GENERATED_KEYS))).thenReturn(mockPreparedStatement);
+        when(mockConnection.prepareStatement(anyString(), eq(RETURN_GENERATED_KEYS))).thenReturn(mockPreparedStatement);
 
         queryBuilder.prepareStatement(mockConnection);
 
         verify(mockQueryPart, times(2)).apply(mockPreparedStatement);
+    }
+
+    @Test
+    void equals() {
+        QueryBuilder queryBuilder1 = new QueryBuilder();
+        queryBuilder1.select();
+        queryBuilder1.from(SOME_TABLE);
+
+        QueryBuilder queryBuilder2 = new QueryBuilder();
+        queryBuilder2.select();
+        queryBuilder2.from(SOME_TABLE);
+
+        Assertions.assertEquals(queryBuilder1, queryBuilder2);
+    }
+
+    @Test
+    void equalsReturnsFalseWhenOrderOfApplicationDiffers() {
+        QueryBuilder correct = new QueryBuilder();
+        correct.select();
+        correct.from(SOME_TABLE);
+
+        QueryBuilder incorrect = new QueryBuilder();
+        incorrect.from(SOME_TABLE);
+        incorrect.select();
+
+        Assertions.assertNotEquals(correct, incorrect);
+    }
+
+    @Test
+    void hashcode() {
+        QueryBuilder queryBuilder = new QueryBuilder();
+        queryBuilder.select();
+        queryBuilder.from(SOME_TABLE);
+
+        Assertions.assertEquals(queryBuilder.hashCode(), queryBuilder.hashCode());
     }
 }
