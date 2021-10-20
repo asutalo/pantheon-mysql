@@ -55,7 +55,12 @@ class GenericDataAccessServiceProvider {
             MySqlField mySqlFieldInfo = field.getAnnotation(MySqlField.class);
 
             if (!mySqlFieldInfo.primary()) {
-                getters.add(new FieldMySqlValue<>(field, mySqlFieldInfo.type()));
+                String fieldName = mySqlFieldInfo.column();
+                if (fieldName.isBlank()) {
+                    getters.add(new FieldMySqlValue<>(field, mySqlFieldInfo.type()));
+                } else {
+                    getters.add(new FieldMySqlValue<>(field, mySqlFieldInfo.type(), fieldName));
+                }
             }
         }
 
@@ -66,7 +71,14 @@ class GenericDataAccessServiceProvider {
         LinkedList<ResultSetFieldValueSetter<T>> setters = new LinkedList<>();
         for (Field field : getDeclaredFields(tClass)) {
             field.setAccessible(true);
-            setters.add(new ResultSetFieldValueSetter<>(field));
+            MySqlField mySqlFieldInfo = field.getAnnotation(MySqlField.class);
+
+            String fieldName = mySqlFieldInfo.column();
+            if (fieldName.isBlank()) {
+                setters.add(new ResultSetFieldValueSetter<>(field));
+            } else {
+                setters.add(new ResultSetFieldValueSetter<>(field, fieldName));
+            }
         }
 
         return setters;
@@ -79,7 +91,12 @@ class GenericDataAccessServiceProvider {
             if (mySqlFieldInfo.primary()) {
                 field.setAccessible(true);
 
-                return new FieldMySqlValue<>(field, mySqlFieldInfo.type());
+                String fieldName = mySqlFieldInfo.column();
+                if (fieldName.isBlank()) {
+                    return new FieldMySqlValue<>(field, mySqlFieldInfo.type());
+                } else {
+                    return new FieldMySqlValue<>(field, mySqlFieldInfo.type(), fieldName);
+                }
             }
         }
 

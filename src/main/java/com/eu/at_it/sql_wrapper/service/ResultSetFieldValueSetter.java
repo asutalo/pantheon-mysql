@@ -14,6 +14,11 @@ class ResultSetFieldValueSetter<T> implements BiConsumer<T, ResultSet> {
         fieldValueSetter = new FieldValueSetter<>(fieldToSet);
     }
 
+    ResultSetFieldValueSetter(Field fieldToSet, String fieldName) {
+        fieldValueSetter = new FieldValueSetter<>(fieldToSet);
+        this.fieldName = fieldName;
+    }
+
     @Override
     public void accept(T setFieldOn, ResultSet resultSet) {
         try {

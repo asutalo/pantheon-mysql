@@ -24,6 +24,16 @@ class FieldMySqlValue<T> implements Function<T, MySqlValue> {
         fieldName = field.getName();
     }
 
+    /**
+     * @param field     reflection of the variable that is used to fetch the value for MySqlValue
+     * @param mysqlType desired MySql type for the value of the field to have
+     */
+    FieldMySqlValue(Field field, MysqlType mysqlType, String fieldName) {
+        this.field = field;
+        this.mysqlType = mysqlType;
+        this.fieldName = fieldName;
+    }
+
     @Override
     public MySqlValue apply(T valueOf) {
         try {

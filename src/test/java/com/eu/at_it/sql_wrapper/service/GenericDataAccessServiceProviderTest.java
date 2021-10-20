@@ -13,6 +13,7 @@ import static com.eu.at_it.sql_wrapper.service.GenericDataAccessServiceProvider.
 
 class GenericDataAccessServiceProviderTest {
     private static final String PRIMARY_KEY_FIELD_IN_TEST_TARGET = "stringField";
+    private static final String COLUMN_NAME = "column";
 
     private final GenericDataAccessServiceProvider genericDataAccessServiceProvider = GenericDataAccessServiceProvider.getInstance();
 
@@ -37,7 +38,9 @@ class GenericDataAccessServiceProviderTest {
         LinkedList<FieldMySqlValue<TestTarget>> actualFieldMySqlValues = genericDataAccessServiceProvider.getFieldMySqlValues(TestTarget.class);
 
         Assertions.assertEquals(nonPrimaryFieldsInTestTarget, actualFieldMySqlValues.size());
-        actualFieldMySqlValues.forEach(fieldValue -> Assertions.assertNotEquals(PRIMARY_KEY_FIELD_IN_TEST_TARGET, fieldValue.getFieldName()));
+        Assertions.assertTrue(actualFieldMySqlValues.stream().noneMatch(testTargetFieldMySqlValue -> testTargetFieldMySqlValue.getFieldName().equals(PRIMARY_KEY_FIELD_IN_TEST_TARGET)));
+        Assertions.assertTrue(actualFieldMySqlValues.stream().anyMatch(testTargetFieldMySqlValue -> testTargetFieldMySqlValue.getFieldName().equals(COLUMN_NAME)));
+        Assertions.assertTrue(actualFieldMySqlValues.stream().anyMatch(testTargetFieldMySqlValue -> !testTargetFieldMySqlValue.getFieldName().equals(COLUMN_NAME)));
     }
 
     @Test
@@ -46,8 +49,13 @@ class GenericDataAccessServiceProviderTest {
     }
 
     @Test
+    void getPrimaryKeyFieldMySqlValue_shouldProvidePrimaryKeyMySqlValueWithProvidedColumnName() {
+        Assertions.assertEquals(COLUMN_NAME, genericDataAccessServiceProvider.getPrimaryKeyFieldMySqlValue(TestTargetNoEmptyConstructor.class).getFieldName());
+    }
+
+    @Test
     void getPrimaryKeyFieldMySqlValue_shouldThrowExceptionWhenNoPrimaryKeyFound() {
-        Assertions.assertThrows(RuntimeException.class, () -> genericDataAccessServiceProvider.getPrimaryKeyFieldMySqlValue(TestTargetNoEmptyConstructor.class));
+        Assertions.assertThrows(RuntimeException.class, () -> genericDataAccessServiceProvider.getPrimaryKeyFieldMySqlValue(NoneArePrimary.class));
     }
 
     @Test
@@ -57,7 +65,7 @@ class GenericDataAccessServiceProviderTest {
 
     @Test
     void getPrimaryKeyFieldValueSetter_shouldThrowExceptionWhenNoPrimaryKeyFound() {
-        Assertions.assertThrows(RuntimeException.class, () -> genericDataAccessServiceProvider.getPrimaryKeyFieldValueSetter(TestTargetNoEmptyConstructor.class));
+        Assertions.assertThrows(RuntimeException.class, () -> genericDataAccessServiceProvider.getPrimaryKeyFieldValueSetter(NoneArePrimary.class));
     }
 
     @Test
@@ -68,6 +76,8 @@ class GenericDataAccessServiceProviderTest {
         Assertions.assertEquals(fieldsInTestTarget, resultSetFieldValueSetters.size());
 
         Assertions.assertFalse(resultSetFieldValueSetters.stream().anyMatch(setter -> setter.getFieldName().equals("notAnnotated")));
+        Assertions.assertTrue(resultSetFieldValueSetters.stream().anyMatch(setter -> setter.getFieldName().equals(COLUMN_NAME)));
+        Assertions.assertTrue(resultSetFieldValueSetters.stream().anyMatch(setter -> !setter.getFieldName().equals(COLUMN_NAME)));
     }
 
     @Test
@@ -91,7 +101,7 @@ class GenericDataAccessServiceProviderTest {
     static class TestTarget {
         @MySqlField(type = MysqlType.VARCHAR, primary = true)
         private final String stringField = "str";
-        @MySqlField(type = MysqlType.INT)
+        @MySqlField(type = MysqlType.INT, column = COLUMN_NAME)
         private final int intField = 1;
         @MySqlField(type = MysqlType.VARCHAR)
         private String otherStringField = "other";
@@ -107,6 +117,9 @@ class GenericDataAccessServiceProviderTest {
     }
 
     static class TestTargetNoEmptyConstructor {
+        @MySqlField(type = MysqlType.VARCHAR, primary = true, column = COLUMN_NAME)
+        private final int intField = 1;
+
         TestTargetNoEmptyConstructor(String otherStringField) {
         }
     }
