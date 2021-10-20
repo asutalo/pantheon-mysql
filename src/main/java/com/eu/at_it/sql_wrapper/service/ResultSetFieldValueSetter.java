@@ -22,4 +22,8 @@ class ResultSetFieldValueSetter<T> implements BiConsumer<T, ResultSet> {
             throw new RuntimeException("Field not returned from query", e);
         }
     }
+
+    String getFieldName() {
+        return fieldName;
+    }
 }

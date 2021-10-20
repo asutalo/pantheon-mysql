@@ -15,8 +15,6 @@ class GenericDataAccessServiceProvider {
     static final String NO_PRIMARY_KEY_FOUND = "No primary key found";
     static final String THERE_CAN_BE_ONLY_ONE_PRIMARY_KEY = "There can be only one primary key";
     static final String FAILED_TO_LOCATE_AN_EMPTY_CONSTRUCTOR = "Failed to locate an empty constructor";
-    //what can I say... I like test coverage, but it doesn't mix well with reflection as it injects a new field
-    private static final String TEST_WITH_COVERAGE_ADDED_FIELD_NAME = "__$lineHits$__";
     private static GenericDataAccessServiceProvider INSTANCE;
 
     private GenericDataAccessServiceProvider() {
@@ -124,6 +122,6 @@ class GenericDataAccessServiceProvider {
     }
 
     private <T> List<Field> getDeclaredFields(Class<T> tClass) {
-        return Arrays.stream(tClass.getDeclaredFields()).filter(field -> !field.getName().equals(TEST_WITH_COVERAGE_ADDED_FIELD_NAME)).collect(Collectors.toList());
+        return Arrays.stream(tClass.getDeclaredFields()).filter(field -> field.getAnnotation(MySqlField.class) != null).collect(Collectors.toList());
     }
 }

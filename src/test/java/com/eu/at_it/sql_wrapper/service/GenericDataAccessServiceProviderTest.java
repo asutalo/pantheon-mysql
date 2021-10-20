@@ -61,10 +61,13 @@ class GenericDataAccessServiceProviderTest {
     }
 
     @Test
-    void getResultSetFieldValueSetters_shouldProvideFieldValueSettersForAllFields() {
+    void getResultSetFieldValueSetters_shouldProvideFieldValueSettersForAllAnnotatedFields() {
         int fieldsInTestTarget = 3;
 
-        Assertions.assertEquals(fieldsInTestTarget, genericDataAccessServiceProvider.getResultSetFieldValueSetters(TestTarget.class).size());
+        LinkedList<ResultSetFieldValueSetter<TestTarget>> resultSetFieldValueSetters = genericDataAccessServiceProvider.getResultSetFieldValueSetters(TestTarget.class);
+        Assertions.assertEquals(fieldsInTestTarget, resultSetFieldValueSetters.size());
+
+        Assertions.assertFalse(resultSetFieldValueSetters.stream().anyMatch(setter -> setter.getFieldName().equals("notAnnotated")));
     }
 
     @Test
@@ -92,12 +95,14 @@ class GenericDataAccessServiceProviderTest {
         private final int intField = 1;
         @MySqlField(type = MysqlType.VARCHAR)
         private String otherStringField = "other";
+        private String notAnnotated = "other";
 
         private TestTarget() {
         }
 
         TestTarget(String otherStringField) {
             this.otherStringField = otherStringField;
+            notAnnotated = "";
         }
     }
 
