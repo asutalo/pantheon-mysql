@@ -41,10 +41,10 @@ public class MySqlClient {
     <T> T execute(QueryBuilder queryBuilder, Function<PreparedStatement, T> preparedStatementExecutor) throws SQLException {
         Connection connection = connector.connect();
         PreparedStatement preparedStatement = queryBuilder.prepareStatement(connection);
-        T apply = preparedStatementExecutor.apply(preparedStatement);
+        T queryResults = preparedStatementExecutor.apply(preparedStatement);
         preparedStatement.close();
         connector.close(connection);
 
-        return apply;
+        return queryResults;
     }
 }
