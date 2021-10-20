@@ -1,10 +1,11 @@
 plugins {
-    id 'java'
+    id 'java-library'
     id 'base'
 }
 
 repositories {
     mavenCentral()
+    maven { url "https://jitpack.io" }
 }
 
 group 'com.eu.atit'
@@ -31,6 +32,7 @@ dependencies {
     testImplementation 'org.mockito:mockito-core:4.0.0'
     testImplementation 'org.mockito:mockito-junit-jupiter:4.0.0'
 
+    api 'com.github.asutalo:didactic-octo-barnacle:0.0.1'
 }
 
 test {
