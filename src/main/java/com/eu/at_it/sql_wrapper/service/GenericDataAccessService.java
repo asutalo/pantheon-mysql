@@ -110,6 +110,7 @@ public class GenericDataAccessService<T> implements DataAccessService<T> {
         throw new IllegalStateException();
     }
 
+    @Override
     public T get(Map<String, Object> filter) throws SQLException, IllegalStateException {
         QueryBuilder queryBuilder = filteredSelectFromFilter(filter);
 
@@ -133,10 +134,24 @@ public class GenericDataAccessService<T> implements DataAccessService<T> {
         return elements;
     }
 
+    @Override
     public List<T> getAll(Map<String, Object> filter) throws SQLException, IllegalStateException {
         QueryBuilder queryBuilder = filteredSelectFromFilter(filter);
 
         return getAll(queryBuilder);
+    }
+
+    @Override
+    public T instanceOfT(Map<String, Object> values) {
+        T instance = instantiator.get();
+
+        values.forEach((key, val) -> {
+            if (allExceptPrimaryFieldValueSetterMap.containsKey(key)) {
+                allExceptPrimaryFieldValueSetterMap.get(key).accept(instance, val);
+            }
+        });
+
+        return instance;
     }
 
     private QueryBuilder filteredSelectFromFilter(Map<String, Object> filter) {
@@ -158,18 +173,6 @@ public class GenericDataAccessService<T> implements DataAccessService<T> {
             if (iterator.hasNext()) queryBuilder.and();
         }
         return queryBuilder;
-    }
-
-    public T instanceOfT(Map<String, Object> values) {
-        T instance = instantiator.get();
-
-        values.forEach((key, val) -> {
-            if (allExceptPrimaryFieldValueSetterMap.containsKey(key)) {
-                allExceptPrimaryFieldValueSetterMap.get(key).accept(instance, val);
-            }
-        });
-
-        return instance;
     }
 
     private T instanceOfT(ResultSet resultSet) {

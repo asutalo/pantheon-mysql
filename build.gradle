@@ -10,7 +10,7 @@ repositories {
 
 group 'com.eu.atit'
 
-version = "0.0.14"
+version = "0.0.15"
 
 apply plugin: "java"
 apply plugin: 'maven'
@@ -32,7 +32,7 @@ dependencies {
     testImplementation 'org.mockito:mockito-core:4.0.0'
     testImplementation 'org.mockito:mockito-junit-jupiter:4.0.0'
 
-    api 'com.github.asutalo:didactic-octo-barnacle:0.0.1'
+    api 'com.github.asutalo:didactic-octo-barnacle:0.0.2'
 }
 
 test {
