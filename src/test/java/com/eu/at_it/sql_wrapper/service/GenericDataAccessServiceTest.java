@@ -159,11 +159,11 @@ class GenericDataAccessServiceTest {
         return new GenericDataAccessService<>(mockMySqlClient, TypeLiteral.get(SOME_CLASS));
     }
 
-    @DisplayName("Get single element using a filter")
+    @DisplayName("Get one or all elements using a filter")
     @Nested
     class FilteredGet {
         @Test
-        void shouldUseProvidedFilterToMapToMySqlValuesAndIgnoreOnesThatDoNotMap() throws SQLException {
+        void get_shouldUseProvidedFilterToMapToMySqlValuesAndIgnoreOnesThatDoNotMap() throws SQLException {
             GenericDataAccessService<Object> spy = spy(genericDataAccessService());
             int intVal = 1;
             String stringVal = "2";
@@ -185,10 +185,39 @@ class GenericDataAccessServiceTest {
         }
 
         @Test
-        void shouldThrowExceptionWhenAllFiltersDoNotMatchMySqlValues() {
+        void get_shouldThrowExceptionWhenAllFiltersDoNotMatchMySqlValues() {
             Map<String, Object> filter = Map.of("someNotExisting", 1);
 
             Assertions.assertThrows(IllegalStateException.class, () -> genericDataAccessService().get(filter));
+        }
+
+        @Test
+        void getAll_shouldUseProvidedFilterToMapToMySqlValuesAndIgnoreOnesThatDoNotMap() throws SQLException {
+            GenericDataAccessService<Object> spy = spy(genericDataAccessService());
+            int intVal = 1;
+            String stringVal = "2";
+            Map<String, Object> filter = Map.of(SOME_VAR, intVal, SOME_OTHER_VAR, stringVal, "someNotExisting", 1);
+
+            when(mockFieldMySqlValue.of(intVal)).thenReturn(mockMySqlValue);
+            when(mockFieldMySqlValue.of(stringVal)).thenReturn(mockMySqlValue);
+            doReturn(List.of(mockObject)).when(spy).getAll(any(QueryBuilder.class));
+
+            QueryBuilder expected = spy.filteredSelect();
+            expected.where();
+            expected.keyIsVal(mockMySqlValue);
+            expected.and();
+            expected.keyIsVal(mockMySqlValue);
+
+            spy.getAll(filter);
+
+            verify(spy).getAll(expected);
+        }
+
+        @Test
+        void getAll_shouldThrowExceptionWhenAllFiltersDoNotMatchMySqlValues() {
+            Map<String, Object> filter = Map.of("someNotExisting", 1);
+
+            Assertions.assertThrows(IllegalStateException.class, () -> genericDataAccessService().getAll(filter));
         }
     }
 

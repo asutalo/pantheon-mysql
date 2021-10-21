@@ -111,23 +111,7 @@ public class GenericDataAccessService<T> implements DataAccessService<T> {
     }
 
     public T get(Map<String, Object> filter) throws SQLException, IllegalStateException {
-        List<MySqlValue> filterMySqlValues = new ArrayList<>();
-        filter.forEach((key, val) -> {
-            if (fieldMySqlValueMap.containsKey(key)) {
-                filterMySqlValues.add(fieldMySqlValueMap.get(key).of(val));
-            }
-        });
-
-        if (filterMySqlValues.isEmpty()) throw new IllegalStateException("Provided filters would produce no results");
-
-        QueryBuilder queryBuilder = filteredSelect();
-        queryBuilder.where();
-        Iterator<MySqlValue> iterator = filterMySqlValues.iterator();
-
-        while (iterator.hasNext()) {
-            queryBuilder.keyIsVal(iterator.next());
-            if (iterator.hasNext()) queryBuilder.and();
-        }
+        QueryBuilder queryBuilder = filteredSelectFromFilter(filter);
 
         return get(queryBuilder);
     }
@@ -147,6 +131,33 @@ public class GenericDataAccessService<T> implements DataAccessService<T> {
         }
 
         return elements;
+    }
+
+    public List<T> getAll(Map<String, Object> filter) throws SQLException, IllegalStateException {
+        QueryBuilder queryBuilder = filteredSelectFromFilter(filter);
+
+        return getAll(queryBuilder);
+    }
+
+    private QueryBuilder filteredSelectFromFilter(Map<String, Object> filter) {
+        List<MySqlValue> filterMySqlValues = new ArrayList<>();
+        filter.forEach((key, val) -> {
+            if (fieldMySqlValueMap.containsKey(key)) {
+                filterMySqlValues.add(fieldMySqlValueMap.get(key).of(val));
+            }
+        });
+
+        if (filterMySqlValues.isEmpty()) throw new IllegalStateException("Provided filters would produce no results");
+
+        QueryBuilder queryBuilder = filteredSelect();
+        queryBuilder.where();
+        Iterator<MySqlValue> iterator = filterMySqlValues.iterator();
+
+        while (iterator.hasNext()) {
+            queryBuilder.keyIsVal(iterator.next());
+            if (iterator.hasNext()) queryBuilder.and();
+        }
+        return queryBuilder;
     }
 
     public T instanceOfT(Map<String, Object> values) {
