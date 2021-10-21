@@ -12,6 +12,7 @@ import java.util.function.Function;
 class FieldMySqlValue<T> implements Function<T, MySqlValue> {
     private final Field field;
     private final String fieldName;
+    private final String variableName;
     private final MysqlType mysqlType;
 
     /**
@@ -22,6 +23,7 @@ class FieldMySqlValue<T> implements Function<T, MySqlValue> {
         this.field = field;
         this.mysqlType = mysqlType;
         fieldName = field.getName();
+        variableName = fieldName;
     }
 
     /**
@@ -32,6 +34,7 @@ class FieldMySqlValue<T> implements Function<T, MySqlValue> {
         this.field = field;
         this.mysqlType = mysqlType;
         this.fieldName = fieldName;
+        variableName = field.getName();
     }
 
     @Override
@@ -44,7 +47,15 @@ class FieldMySqlValue<T> implements Function<T, MySqlValue> {
         }
     }
 
+    MySqlValue of(Object val) {
+        return new MySqlValue(mysqlType, fieldName, val);
+    }
+
     String getFieldName() {
         return fieldName;
+    }
+
+    String getVariableName() {
+        return variableName;
     }
 }

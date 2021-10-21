@@ -6,8 +6,9 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.LinkedList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 // utility class to make testing of the GenericDataAccessService easier
@@ -47,10 +48,10 @@ class GenericDataAccessServiceProvider {
         }
     }
 
-    <T> LinkedList<FieldMySqlValue<T>> getFieldMySqlValues(Class<T> tClass) {
-        LinkedList<FieldMySqlValue<T>> getters = new LinkedList<>();
+    <T> List<FieldMySqlValue<T>> getNonPrimaryKeyFieldMySqlValues(Class<T> tClass) {
+        List<FieldMySqlValue<T>> getters = new ArrayList<>();
 
-        for (Field field : getDeclaredFields(tClass)) {
+        for (Field field : getDeclaredSqlFields(tClass)) {
             field.setAccessible(true);
             MySqlField mySqlFieldInfo = field.getAnnotation(MySqlField.class);
 
@@ -67,9 +68,9 @@ class GenericDataAccessServiceProvider {
         return getters;
     }
 
-    <T> LinkedList<ResultSetFieldValueSetter<T>> getResultSetFieldValueSetters(Class<T> tClass) {
-        LinkedList<ResultSetFieldValueSetter<T>> setters = new LinkedList<>();
-        for (Field field : getDeclaredFields(tClass)) {
+    <T> List<ResultSetFieldValueSetter<T>> getResultSetFieldValueSetters(Class<T> tClass) {
+        List<ResultSetFieldValueSetter<T>> setters = new ArrayList<>();
+        for (Field field : getDeclaredSqlFields(tClass)) {
             field.setAccessible(true);
             MySqlField mySqlFieldInfo = field.getAnnotation(MySqlField.class);
 
@@ -85,7 +86,7 @@ class GenericDataAccessServiceProvider {
     }
 
     <T> FieldMySqlValue<T> getPrimaryKeyFieldMySqlValue(Class<T> tClass) {
-        for (Field field : getDeclaredFields(tClass)) {
+        for (Field field : getDeclaredSqlFields(tClass)) {
             MySqlField mySqlFieldInfo = field.getAnnotation(MySqlField.class);
 
             if (mySqlFieldInfo.primary()) {
@@ -104,7 +105,7 @@ class GenericDataAccessServiceProvider {
     }
 
     <T> FieldValueSetter<T> getPrimaryKeyFieldValueSetter(Class<T> tClass) {
-        for (Field field : getDeclaredFields(tClass)) {
+        for (Field field : getDeclaredSqlFields(tClass)) {
             MySqlField mySqlFieldInfo = field.getAnnotation(MySqlField.class);
 
             if (mySqlFieldInfo.primary()) {
@@ -124,7 +125,7 @@ class GenericDataAccessServiceProvider {
         }
 
         List<Field> primaryKeys = new ArrayList<>();
-        for (Field field : getDeclaredFields(tClass)) {
+        for (Field field : getDeclaredSqlFields(tClass)) {
             MySqlField mySqlFieldInfo = field.getAnnotation(MySqlField.class);
 
             if (mySqlFieldInfo.primary()) {
@@ -138,7 +139,26 @@ class GenericDataAccessServiceProvider {
             throw new RuntimeException(THERE_CAN_BE_ONLY_ONE_PRIMARY_KEY);
     }
 
-    private <T> List<Field> getDeclaredFields(Class<T> tClass) {
+    private <T> List<Field> getDeclaredSqlFields(Class<T> tClass) {
         return Arrays.stream(tClass.getDeclaredFields()).filter(field -> field.getAnnotation(MySqlField.class) != null).collect(Collectors.toList());
+    }
+
+    <T> Map<String, FieldValueSetter<T>> getNonPrimaryFieldValueSetterMap(Class<T> tClass) {
+        Map<String, FieldValueSetter<T>> map = new HashMap<>();
+
+        for (Field field : tClass.getDeclaredFields()) {
+            field.setAccessible(true);
+            MySqlField mySqlFieldInfo = field.getAnnotation(MySqlField.class);
+
+            if (mySqlFieldInfo != null) {
+                if (!mySqlFieldInfo.primary()) {
+                    map.put(field.getName(), new FieldValueSetter<>(field));
+                }
+            } else {
+                map.put(field.getName(), new FieldValueSetter<>(field));
+            }
+        }
+
+        return map;
     }
 }

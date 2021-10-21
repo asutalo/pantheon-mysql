@@ -5,7 +5,8 @@ import com.mysql.cj.MysqlType;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 
 import static com.eu.at_it.sql_wrapper.service.GenericDataAccessServiceProvider.FAILED_TO_LOCATE_AN_EMPTY_CONSTRUCTOR;
 import static com.eu.at_it.sql_wrapper.service.GenericDataAccessServiceProvider.NO_PRIMARY_KEY_FOUND;
@@ -35,7 +36,7 @@ class GenericDataAccessServiceProviderTest {
     @Test
     void getFieldMySqlValues_shouldProvideAllValuesExceptPrimaryKey() {
         int nonPrimaryFieldsInTestTarget = 2;
-        LinkedList<FieldMySqlValue<TestTarget>> actualFieldMySqlValues = genericDataAccessServiceProvider.getFieldMySqlValues(TestTarget.class);
+        List<FieldMySqlValue<TestTarget>> actualFieldMySqlValues = genericDataAccessServiceProvider.getNonPrimaryKeyFieldMySqlValues(TestTarget.class);
 
         Assertions.assertEquals(nonPrimaryFieldsInTestTarget, actualFieldMySqlValues.size());
         Assertions.assertTrue(actualFieldMySqlValues.stream().noneMatch(testTargetFieldMySqlValue -> testTargetFieldMySqlValue.getFieldName().equals(PRIMARY_KEY_FIELD_IN_TEST_TARGET)));
@@ -72,7 +73,7 @@ class GenericDataAccessServiceProviderTest {
     void getResultSetFieldValueSetters_shouldProvideFieldValueSettersForAllAnnotatedFields() {
         int fieldsInTestTarget = 3;
 
-        LinkedList<ResultSetFieldValueSetter<TestTarget>> resultSetFieldValueSetters = genericDataAccessServiceProvider.getResultSetFieldValueSetters(TestTarget.class);
+        List<ResultSetFieldValueSetter<TestTarget>> resultSetFieldValueSetters = genericDataAccessServiceProvider.getResultSetFieldValueSetters(TestTarget.class);
         Assertions.assertEquals(fieldsInTestTarget, resultSetFieldValueSetters.size());
 
         Assertions.assertFalse(resultSetFieldValueSetters.stream().anyMatch(setter -> setter.getFieldName().equals("notAnnotated")));
@@ -96,6 +97,22 @@ class GenericDataAccessServiceProviderTest {
     void validateClass_shouldThrowExceptionWhenMultiplePrimaryKeyFound() {
         RuntimeException runtimeException = Assertions.assertThrows(RuntimeException.class, () -> genericDataAccessServiceProvider.validateClass(MultiPrimary.class));
         Assertions.assertEquals(THERE_CAN_BE_ONLY_ONE_PRIMARY_KEY, runtimeException.getMessage());
+    }
+
+    @Test
+    void getNonPrimaryFieldValueSetterMap_shouldReturnAllNonPrimaryAndNonAnnotatedFieldValueSetters() {
+        Map<String, FieldValueSetter<TestTarget>> actual = genericDataAccessServiceProvider.getNonPrimaryFieldValueSetterMap(TestTarget.class);
+
+        int nonIdFieldsInTestTarget = 3;
+        Assertions.assertEquals(nonIdFieldsInTestTarget, countFields(actual));
+        Assertions.assertFalse(actual.containsKey("stringField"));
+    }
+
+    private int countFields(Map<String, FieldValueSetter<TestTarget>> actual) {
+        int size = actual.size();
+
+        if (actual.containsKey("__$lineHits$__")) size--;
+        return size;
     }
 
     static class TestTarget {

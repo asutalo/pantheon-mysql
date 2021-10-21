@@ -43,6 +43,7 @@ public class MySqlClient {
      *  connection.setAutoCommit(false);
      *  not sure if while autocommit is false a ResultSet can be created... might need to play with Savepoints as well...
      *  in any case, should be doable to open a connection, execute multiple queries, and then close connection to persist
+     *  https://www.mysqltutorial.org/mysql-jdbc-transaction/
      */
     <T> T execute(QueryBuilder queryBuilder, Function<PreparedStatement, T> preparedStatementExecutor) throws SQLException {
         Connection connection = connector.connect();

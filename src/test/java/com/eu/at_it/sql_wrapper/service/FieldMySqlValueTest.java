@@ -28,4 +28,26 @@ class FieldMySqlValueTest extends FunctionsTestBase {
 
         Assertions.assertThrows(RuntimeException.class, () -> new FieldMySqlValue<>(testField, MysqlType.INT).apply(new Object()));
     }
+
+    @Test
+    void getVariableName_shouldAlwaysBeFieldName() {
+        Field testField = getField();
+        String actualVariableName = new FieldMySqlValue<>(testField, MysqlType.INT).getVariableName();
+        String actualVariableNameWhenAltNameUsed = new FieldMySqlValue<>(testField, MysqlType.INT, "column").getVariableName();
+
+        Assertions.assertEquals(testField.getName(), actualVariableNameWhenAltNameUsed);
+        Assertions.assertEquals(actualVariableName, actualVariableNameWhenAltNameUsed);
+    }
+
+    @Test
+    void of_shouldCreateMySqlValueWithProvidedValue() {
+        Field testField = getField();
+        int expectedVal = 1;
+
+        MySqlValue expected = new MySqlValue(MysqlType.INT, testField.getName(), expectedVal);
+
+        MySqlValue actual = new FieldMySqlValue<>(testField, MysqlType.INT).of(expectedVal);
+
+        Assertions.assertEquals(expected, actual);
+    }
 }

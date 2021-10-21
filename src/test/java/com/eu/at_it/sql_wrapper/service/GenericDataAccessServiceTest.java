@@ -17,8 +17,11 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -29,6 +32,8 @@ import static org.mockito.Mockito.when;
 class GenericDataAccessServiceTest {
     private static final Class<Object> SOME_CLASS = Object.class;
     private static final String SOME_TABLE = "someTable";
+    private static final String SOME_VAR = "someVar";
+    private static final String SOME_OTHER_VAR = "someOtherVar";
 
     @Mock
     private GenericDataAccessServiceProvider mockGenericDataAccessServiceProvider;
@@ -71,27 +76,30 @@ class GenericDataAccessServiceTest {
         when(mockGenericDataAccessServiceProvider.getInstantiator(any())).thenReturn(mockInstantiator);
         when(mockGenericDataAccessServiceProvider.getPrimaryKeyFieldMySqlValue(any())).thenReturn(mockFieldMySqlValue);
         when(mockGenericDataAccessServiceProvider.getPrimaryKeyFieldValueSetter(any())).thenReturn(mockFieldValueSetter);
+        when(mockGenericDataAccessServiceProvider.getNonPrimaryFieldValueSetterMap(any())).thenReturn(Map.of(SOME_VAR, mockFieldValueSetter));
 
         when(mockGenericDataAccessServiceProvider.getResultSetFieldValueSetters(any())).thenReturn(someResultSetFieldValueSetters);
-        when(mockGenericDataAccessServiceProvider.getFieldMySqlValues(any())).thenReturn(new LinkedList<>(List.of(mockFieldMySqlValue, mockFieldMySqlValue)));
+        when(mockGenericDataAccessServiceProvider.getNonPrimaryKeyFieldMySqlValues(any())).thenReturn(new LinkedList<>(List.of(mockFieldMySqlValue, mockFieldMySqlValue)));
+        when(mockFieldMySqlValue.getVariableName()).thenReturn(SOME_VAR).thenReturn(SOME_OTHER_VAR);
     }
 
     @Test
     void shouldInitializeViaTheProvider() {
-        genericDataAccessService();
+        GenericDataAccessService<Object> genericDataAccessService = genericDataAccessService();
 
         verify(mockGenericDataAccessServiceProvider).validateClass(SOME_CLASS);
-        verify(mockGenericDataAccessServiceProvider).getFieldMySqlValues(SOME_CLASS);
+        verify(mockGenericDataAccessServiceProvider).getNonPrimaryKeyFieldMySqlValues(SOME_CLASS);
         verify(mockGenericDataAccessServiceProvider).getResultSetFieldValueSetters(SOME_CLASS);
         verify(mockGenericDataAccessServiceProvider).getInstantiator(SOME_CLASS);
         verify(mockGenericDataAccessServiceProvider).getPrimaryKeyFieldValueSetter(SOME_CLASS);
         verify(mockGenericDataAccessServiceProvider).getPrimaryKeyFieldMySqlValue(SOME_CLASS);
         verify(mockGenericDataAccessServiceProvider).getTableName(SOME_CLASS);
+        verify(mockGenericDataAccessServiceProvider).getNonPrimaryFieldValueSetterMap(SOME_CLASS);
         verifyNoMoreInteractions(mockGenericDataAccessServiceProvider);
-    }
 
-    private GenericDataAccessService<Object> genericDataAccessService() {
-        return new GenericDataAccessService<>(mockMySqlClient, TypeLiteral.get(SOME_CLASS));
+        Map<String, FieldMySqlValue<Object>> fieldMySqlValueMap = genericDataAccessService.getFieldMySqlValueMap();
+        Map<String, FieldMySqlValue<Object>> expectedFieldMySqlValueMap = Map.of(SOME_VAR, mockFieldMySqlValue, SOME_OTHER_VAR, mockFieldMySqlValue);
+        Assertions.assertEquals(expectedFieldMySqlValueMap, fieldMySqlValueMap);
     }
 
     @DisplayName("Filtered selection query builder")
@@ -147,6 +155,43 @@ class GenericDataAccessServiceTest {
         }
     }
 
+    private GenericDataAccessService<Object> genericDataAccessService() {
+        return new GenericDataAccessService<>(mockMySqlClient, TypeLiteral.get(SOME_CLASS));
+    }
+
+    @DisplayName("Get single element using a filter")
+    @Nested
+    class FilteredGet {
+        @Test
+        void shouldUseProvidedFilterToMapToMySqlValuesAndIgnoreOnesThatDoNotMap() throws SQLException {
+            GenericDataAccessService<Object> spy = spy(genericDataAccessService());
+            int intVal = 1;
+            String stringVal = "2";
+            Map<String, Object> filter = Map.of(SOME_VAR, intVal, SOME_OTHER_VAR, stringVal, "someNotExisting", 1);
+
+            when(mockFieldMySqlValue.of(intVal)).thenReturn(mockMySqlValue);
+            when(mockFieldMySqlValue.of(stringVal)).thenReturn(mockMySqlValue);
+            doReturn(mockObject).when(spy).get(any(QueryBuilder.class));
+
+            QueryBuilder expected = spy.filteredSelect();
+            expected.where();
+            expected.keyIsVal(mockMySqlValue);
+            expected.and();
+            expected.keyIsVal(mockMySqlValue);
+
+            spy.get(filter);
+
+            verify(spy).get(expected);
+        }
+
+        @Test
+        void shouldThrowExceptionWhenAllFiltersDoNotMatchMySqlValues() {
+            Map<String, Object> filter = Map.of("someNotExisting", 1);
+
+            Assertions.assertThrows(IllegalStateException.class, () -> genericDataAccessService().get(filter));
+        }
+    }
+
     @DisplayName("Get all elements")
     @Nested
     class GetAll {
@@ -183,6 +228,7 @@ class GenericDataAccessServiceTest {
             verify(mockInstantiator, times(expectedNumberOfElements)).get();
             verify(mockResultSetFieldValueSetter, times(expectedNumberOfSetterOperations)).accept(mockObject, mockResultSet);
         }
+
     }
 
     @DisplayName("Delete an element")
@@ -211,6 +257,25 @@ class GenericDataAccessServiceTest {
 
             Assertions.assertThrows(RuntimeException.class, () -> genericDataAccessService().delete(mockObject));
         }
+
+    }
+
+    @DisplayName("Save an element")
+    @Nested
+    class Save {
+        @Test
+        void shouldSaveAnElement() throws SQLException {
+            int someInsertId = 1;
+            when(mockMySqlClient.prepAndExecuteInsertQuery(any())).thenReturn(someInsertId);
+            when(mockFieldMySqlValue.apply(mockObject)).thenReturn(mockMySqlValue).thenReturn(mockMySqlValue);
+
+            LinkedList<MySqlValue> expectedMySqlValues = new LinkedList<>(List.of(mockMySqlValue, mockMySqlValue));
+            QueryBuilder expectedQueryBuilder = new QueryBuilder();
+            expectedQueryBuilder.insert(SOME_TABLE, expectedMySqlValues);
+
+            Assertions.assertNotNull(genericDataAccessService().save(mockObject));
+            verify(mockMySqlClient).prepAndExecuteInsertQuery(expectedQueryBuilder);
+        }
     }
 
     @DisplayName("Update an element")
@@ -238,23 +303,20 @@ class GenericDataAccessServiceTest {
 
             Assertions.assertThrows(RuntimeException.class, () -> genericDataAccessService().update(mockObject));
         }
+
     }
 
-    @DisplayName("Save an element")
+    @DisplayName("Instantiation of an element")
     @Nested
-    class Save {
+    class Instantiate {
         @Test
-        void shouldSaveAnElement() throws SQLException {
-            int someInsertId = 1;
-            when(mockMySqlClient.prepAndExecuteInsertQuery(any())).thenReturn(someInsertId);
-            when(mockFieldMySqlValue.apply(mockObject)).thenReturn(mockMySqlValue).thenReturn(mockMySqlValue);
+        void shouldInstantiateAnObjectWithMappedValuesAndIgnoringUnmappedValues() {
+            when(mockInstantiator.get()).thenReturn(mockObject);
+            int expectedValue = 1;
+            genericDataAccessService().instanceOfT(Map.of(SOME_VAR, expectedValue, "unmapped", "2"));
 
-            LinkedList<MySqlValue> expectedMySqlValues = new LinkedList<>(List.of(mockMySqlValue, mockMySqlValue));
-            QueryBuilder expectedQueryBuilder = new QueryBuilder();
-            expectedQueryBuilder.insert(SOME_TABLE, expectedMySqlValues);
-
-            Assertions.assertNotNull(genericDataAccessService().save(mockObject));
-            verify(mockMySqlClient).prepAndExecuteInsertQuery(expectedQueryBuilder);
+            verify(mockFieldValueSetter).accept(mockObject, expectedValue);
+            verifyNoMoreInteractions(mockFieldValueSetter);
         }
     }
 }

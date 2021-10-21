@@ -8,15 +8,21 @@ import com.google.inject.TypeLiteral;
 import javax.inject.Inject;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 
 public class GenericDataAccessService<T> implements DataAccessService<T> {
     private final Instantiator<T> instantiator;
-    private final LinkedList<FieldMySqlValue<T>> fieldMySqlValues;
-    private final LinkedList<ResultSetFieldValueSetter<T>> resultSetFieldValueSetters;
     private final FieldMySqlValue<T> primaryKeyFieldMySqlValue;
+    private final List<FieldMySqlValue<T>> nonPrimaryKeyFieldMySqlValues;
+    private final Map<String, FieldMySqlValue<T>> fieldMySqlValueMap = new HashMap<>(); //will include primary key
+    private final List<ResultSetFieldValueSetter<T>> resultSetFieldValueSetters;
+    private final Map<String, FieldValueSetter<T>> allExceptPrimaryFieldValueSetterMap; //no primary key included but will include not annotated fields as well
     private final FieldValueSetter<T> primaryKeyFieldValueSetter;
     private final MySqlClient mySqlClient;
     private final String tableName;
@@ -31,16 +37,15 @@ public class GenericDataAccessService<T> implements DataAccessService<T> {
         genericDataAccessServiceProvider.validateClass(tClass);
         tableName = genericDataAccessServiceProvider.getTableName(tClass);
         instantiator = genericDataAccessServiceProvider.getInstantiator(tClass);
-        fieldMySqlValues = genericDataAccessServiceProvider.getFieldMySqlValues(tClass);
-        resultSetFieldValueSetters = genericDataAccessServiceProvider.getResultSetFieldValueSetters(tClass);
+        nonPrimaryKeyFieldMySqlValues = genericDataAccessServiceProvider.getNonPrimaryKeyFieldMySqlValues(tClass);
         primaryKeyFieldMySqlValue = genericDataAccessServiceProvider.getPrimaryKeyFieldMySqlValue(tClass);
         primaryKeyFieldValueSetter = genericDataAccessServiceProvider.getPrimaryKeyFieldValueSetter(tClass);
-    }
+        resultSetFieldValueSetters = genericDataAccessServiceProvider.getResultSetFieldValueSetters(tClass);
 
-    private LinkedList<MySqlValue> mySqlValues(T user) {
-        LinkedList<MySqlValue> mySqlValues = new LinkedList<>();
-        fieldMySqlValues.forEach(getter -> mySqlValues.add(getter.apply(user)));
-        return mySqlValues;
+        fieldMySqlValueMap.put(primaryKeyFieldMySqlValue.getVariableName(), primaryKeyFieldMySqlValue);
+        nonPrimaryKeyFieldMySqlValues.forEach(fieldMySqlValue -> fieldMySqlValueMap.put(fieldMySqlValue.getVariableName(), fieldMySqlValue));
+
+        allExceptPrimaryFieldValueSetterMap = genericDataAccessServiceProvider.getNonPrimaryFieldValueSetterMap(tClass);
     }
 
     @Override
@@ -105,6 +110,28 @@ public class GenericDataAccessService<T> implements DataAccessService<T> {
         throw new IllegalStateException();
     }
 
+    public T get(Map<String, Object> filter) throws SQLException, IllegalStateException {
+        List<MySqlValue> filterMySqlValues = new ArrayList<>();
+        filter.forEach((key, val) -> {
+            if (fieldMySqlValueMap.containsKey(key)) {
+                filterMySqlValues.add(fieldMySqlValueMap.get(key).of(val));
+            }
+        });
+
+        if (filterMySqlValues.isEmpty()) throw new IllegalStateException("Provided filters would produce no results");
+
+        QueryBuilder queryBuilder = filteredSelect();
+        queryBuilder.where();
+        Iterator<MySqlValue> iterator = filterMySqlValues.iterator();
+
+        while (iterator.hasNext()) {
+            queryBuilder.keyIsVal(iterator.next());
+            if (iterator.hasNext()) queryBuilder.and();
+        }
+
+        return get(queryBuilder);
+    }
+
     @Override
     public List<T> getAll() throws SQLException {
         return getAll(filteredSelect());
@@ -122,11 +149,33 @@ public class GenericDataAccessService<T> implements DataAccessService<T> {
         return elements;
     }
 
+    public T instanceOfT(Map<String, Object> values) {
+        T instance = instantiator.get();
+
+        values.forEach((key, val) -> {
+            if (allExceptPrimaryFieldValueSetterMap.containsKey(key)) {
+                allExceptPrimaryFieldValueSetterMap.get(key).accept(instance, val);
+            }
+        });
+
+        return instance;
+    }
+
     private T instanceOfT(ResultSet resultSet) {
         T instance = instantiator.get();
 
         resultSetFieldValueSetters.forEach(setter -> setter.accept(instance, resultSet));
 
         return instance;
+    }
+
+    Map<String, FieldMySqlValue<T>> getFieldMySqlValueMap() {
+        return fieldMySqlValueMap;
+    }
+
+    private LinkedList<MySqlValue> mySqlValues(T user) {
+        LinkedList<MySqlValue> mySqlValues = new LinkedList<>();
+        nonPrimaryKeyFieldMySqlValues.forEach(getter -> mySqlValues.add(getter.apply(user)));
+        return mySqlValues;
     }
 }
