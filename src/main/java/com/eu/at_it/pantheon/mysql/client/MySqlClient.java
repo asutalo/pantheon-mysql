@@ -1,5 +1,6 @@
 package com.eu.at_it.pantheon.mysql.client;
 
+import com.eu.at_it.pantheon.client.data.DataClient;
 import com.eu.at_it.pantheon.mysql.query.QueryBuilder;
 
 import javax.sql.rowset.RowSetFactory;
@@ -9,7 +10,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.function.Function;
 
-public class MySqlClient {
+public class MySqlClient implements DataClient {
     private final Connector connector;
     private final SelectQueryResultProcessorFunction selectQueryResultProcessorFunction;
     private final InsertQueryResultProcessorFunction insertQueryResultProcessorFunction;

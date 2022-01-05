@@ -8,31 +8,31 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.Map;
 
-class GenericDataAccessServiceProviderTest {
+class MySQLServiceProviderTest {
     private static final String PRIMARY_KEY_FIELD_IN_TEST_TARGET = "stringField";
     private static final String COLUMN_NAME = "column";
 
-    private final GenericDataAccessServiceProvider genericDataAccessServiceProvider = GenericDataAccessServiceProvider.getInstance();
+    private final MySQLServiceFieldsProvider mySQLServiceFieldsProvider = MySQLServiceFieldsProvider.getInstance();
 
     @Test
     void getTableName_shouldReturnSimpleClassName() {
-        Assertions.assertEquals(TestTarget.class.getSimpleName(), genericDataAccessServiceProvider.getTableName(TestTarget.class));
+        Assertions.assertEquals(TestTarget.class.getSimpleName(), mySQLServiceFieldsProvider.getTableName(TestTarget.class));
     }
 
     @Test
     void getInstantiator_shouldCreateInstantiatorFromEmptyConstructor() throws NoSuchMethodException {
-        Assertions.assertEquals(TestTarget.class.getDeclaredConstructor(), genericDataAccessServiceProvider.getInstantiator(TestTarget.class).getDeclaredConstructor());
+        Assertions.assertEquals(TestTarget.class.getDeclaredConstructor(), mySQLServiceFieldsProvider.getInstantiator(TestTarget.class).getDeclaredConstructor());
     }
 
     @Test
     void getInstantiator_shouldThrowExceptionWhenEmptyConstructorNotFound() {
-        Assertions.assertThrows(RuntimeException.class, () -> genericDataAccessServiceProvider.getInstantiator(TestTargetNoEmptyConstructor.class));
+        Assertions.assertThrows(RuntimeException.class, () -> mySQLServiceFieldsProvider.getInstantiator(TestTargetNoEmptyConstructor.class));
     }
 
     @Test
     void getFieldMySqlValues_shouldProvideAllValuesExceptPrimaryKey() {
         int nonPrimaryFieldsInTestTarget = 2;
-        List<FieldMySqlValue<TestTarget>> actualFieldMySqlValues = genericDataAccessServiceProvider.getNonPrimaryKeyFieldMySqlValues(TestTarget.class);
+        List<FieldMySqlValue<TestTarget>> actualFieldMySqlValues = mySQLServiceFieldsProvider.getNonPrimaryKeyFieldMySqlValues(TestTarget.class);
 
         Assertions.assertEquals(nonPrimaryFieldsInTestTarget, actualFieldMySqlValues.size());
         Assertions.assertTrue(actualFieldMySqlValues.stream().noneMatch(testTargetFieldMySqlValue -> testTargetFieldMySqlValue.getFieldName().equals(PRIMARY_KEY_FIELD_IN_TEST_TARGET)));
@@ -42,34 +42,34 @@ class GenericDataAccessServiceProviderTest {
 
     @Test
     void getPrimaryKeyFieldMySqlValue_shouldProvidePrimaryKeyMySqlValue() {
-        Assertions.assertEquals(PRIMARY_KEY_FIELD_IN_TEST_TARGET, genericDataAccessServiceProvider.getPrimaryKeyFieldMySqlValue(TestTarget.class).getFieldName());
+        Assertions.assertEquals(PRIMARY_KEY_FIELD_IN_TEST_TARGET, mySQLServiceFieldsProvider.getPrimaryKeyFieldMySqlValue(TestTarget.class).getFieldName());
     }
 
     @Test
     void getPrimaryKeyFieldMySqlValue_shouldProvidePrimaryKeyMySqlValueWithProvidedColumnName() {
-        Assertions.assertEquals(COLUMN_NAME, genericDataAccessServiceProvider.getPrimaryKeyFieldMySqlValue(TestTargetNoEmptyConstructor.class).getFieldName());
+        Assertions.assertEquals(COLUMN_NAME, mySQLServiceFieldsProvider.getPrimaryKeyFieldMySqlValue(TestTargetNoEmptyConstructor.class).getFieldName());
     }
 
     @Test
     void getPrimaryKeyFieldMySqlValue_shouldThrowExceptionWhenNoPrimaryKeyFound() {
-        Assertions.assertThrows(RuntimeException.class, () -> genericDataAccessServiceProvider.getPrimaryKeyFieldMySqlValue(NoneArePrimary.class));
+        Assertions.assertThrows(RuntimeException.class, () -> mySQLServiceFieldsProvider.getPrimaryKeyFieldMySqlValue(NoneArePrimary.class));
     }
 
     @Test
     void getPrimaryKeyFieldValueSetter_shouldProvideFieldValueSetterForPrimaryKey() {
-        Assertions.assertEquals(PRIMARY_KEY_FIELD_IN_TEST_TARGET, genericDataAccessServiceProvider.getPrimaryKeyFieldValueSetter(TestTarget.class).getField().getName());
+        Assertions.assertEquals(PRIMARY_KEY_FIELD_IN_TEST_TARGET, mySQLServiceFieldsProvider.getPrimaryKeyFieldValueSetter(TestTarget.class).getField().getName());
     }
 
     @Test
     void getPrimaryKeyFieldValueSetter_shouldThrowExceptionWhenNoPrimaryKeyFound() {
-        Assertions.assertThrows(RuntimeException.class, () -> genericDataAccessServiceProvider.getPrimaryKeyFieldValueSetter(NoneArePrimary.class));
+        Assertions.assertThrows(RuntimeException.class, () -> mySQLServiceFieldsProvider.getPrimaryKeyFieldValueSetter(NoneArePrimary.class));
     }
 
     @Test
     void getResultSetFieldValueSetters_shouldProvideFieldValueSettersForAllAnnotatedFields() {
         int fieldsInTestTarget = 3;
 
-        List<ResultSetFieldValueSetter<TestTarget>> resultSetFieldValueSetters = genericDataAccessServiceProvider.getResultSetFieldValueSetters(TestTarget.class);
+        List<ResultSetFieldValueSetter<TestTarget>> resultSetFieldValueSetters = mySQLServiceFieldsProvider.getResultSetFieldValueSetters(TestTarget.class);
         Assertions.assertEquals(fieldsInTestTarget, resultSetFieldValueSetters.size());
 
         Assertions.assertFalse(resultSetFieldValueSetters.stream().anyMatch(setter -> setter.getFieldName().equals("notAnnotated")));
@@ -79,25 +79,25 @@ class GenericDataAccessServiceProviderTest {
 
     @Test
     void validateClass_shouldThrowExceptionWhenNoDefaultConstructor() {
-        RuntimeException runtimeException = Assertions.assertThrows(RuntimeException.class, () -> genericDataAccessServiceProvider.validateClass(TestTargetNoEmptyConstructor.class));
-        Assertions.assertEquals(GenericDataAccessServiceProvider.FAILED_TO_LOCATE_AN_EMPTY_CONSTRUCTOR, runtimeException.getMessage());
+        RuntimeException runtimeException = Assertions.assertThrows(RuntimeException.class, () -> mySQLServiceFieldsProvider.validateClass(TestTargetNoEmptyConstructor.class));
+        Assertions.assertEquals(MySQLServiceFieldsProvider.FAILED_TO_LOCATE_AN_EMPTY_CONSTRUCTOR, runtimeException.getMessage());
     }
 
     @Test
     void validateClass_shouldThrowExceptionWhenNoPrimaryKeyFound() {
-        RuntimeException runtimeException = Assertions.assertThrows(RuntimeException.class, () -> genericDataAccessServiceProvider.validateClass(NoneArePrimary.class));
-        Assertions.assertEquals(GenericDataAccessServiceProvider.NO_PRIMARY_KEY_FOUND, runtimeException.getMessage());
+        RuntimeException runtimeException = Assertions.assertThrows(RuntimeException.class, () -> mySQLServiceFieldsProvider.validateClass(NoneArePrimary.class));
+        Assertions.assertEquals(MySQLServiceFieldsProvider.NO_PRIMARY_KEY_FOUND, runtimeException.getMessage());
     }
 
     @Test
     void validateClass_shouldThrowExceptionWhenMultiplePrimaryKeyFound() {
-        RuntimeException runtimeException = Assertions.assertThrows(RuntimeException.class, () -> genericDataAccessServiceProvider.validateClass(MultiPrimary.class));
-        Assertions.assertEquals(GenericDataAccessServiceProvider.THERE_CAN_BE_ONLY_ONE_PRIMARY_KEY, runtimeException.getMessage());
+        RuntimeException runtimeException = Assertions.assertThrows(RuntimeException.class, () -> mySQLServiceFieldsProvider.validateClass(MultiPrimary.class));
+        Assertions.assertEquals(MySQLServiceFieldsProvider.THERE_CAN_BE_ONLY_ONE_PRIMARY_KEY, runtimeException.getMessage());
     }
 
     @Test
     void getNonPrimaryFieldValueSetterMap_shouldReturnAllNonPrimaryAndNonAnnotatedFieldValueSetters() {
-        Map<String, FieldValueSetter<TestTarget>> actual = genericDataAccessServiceProvider.getNonPrimaryFieldValueSetterMap(TestTarget.class);
+        Map<String, FieldValueSetter<TestTarget>> actual = mySQLServiceFieldsProvider.getNonPrimaryFieldValueSetterMap(TestTarget.class);
 
         int nonIdFieldsInTestTarget = 3;
         Assertions.assertEquals(nonIdFieldsInTestTarget, countFields(actual));

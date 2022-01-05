@@ -1,8 +1,10 @@
 package com.eu.at_it.pantheon.mysql.service;
 
+import com.eu.at_it.pantheon.client.data.DataClient;
 import com.eu.at_it.pantheon.mysql.client.MySqlClient;
 import com.eu.at_it.pantheon.mysql.query.MySqlValue;
 import com.eu.at_it.pantheon.mysql.query.QueryBuilder;
+import com.eu.at_it.pantheon.service.data.DataService;
 import com.google.inject.TypeLiteral;
 
 import javax.inject.Inject;
@@ -15,7 +17,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-public class GenericDataAccessService<T> implements DataAccessService<T> {
+public class MySQLService<T> implements DataService<T, QueryBuilder> {
     private final Instantiator<T> instantiator;
     private final FieldMySqlValue<T> primaryKeyFieldMySqlValue;
     private final List<FieldMySqlValue<T>> nonPrimaryKeyFieldMySqlValues;
@@ -27,24 +29,24 @@ public class GenericDataAccessService<T> implements DataAccessService<T> {
     private final String tableName;
 
     @Inject
-    public GenericDataAccessService(MySqlClient mySqlClient, TypeLiteral<T> typeLiteral) {
-        this.mySqlClient = mySqlClient;
+    public MySQLService(DataClient mySqlClient, TypeLiteral<T> typeLiteral) {
+        this.mySqlClient = (MySqlClient) mySqlClient;
         Class<T> tClass = (Class<T>) typeLiteral.getType();
 
-        GenericDataAccessServiceProvider genericDataAccessServiceProvider = GenericDataAccessServiceProvider.getInstance();
+        MySQLServiceFieldsProvider mySQLServiceFieldsProvider = MySQLServiceFieldsProvider.getInstance();
 
-        genericDataAccessServiceProvider.validateClass(tClass);
-        tableName = genericDataAccessServiceProvider.getTableName(tClass);
-        instantiator = genericDataAccessServiceProvider.getInstantiator(tClass);
-        nonPrimaryKeyFieldMySqlValues = genericDataAccessServiceProvider.getNonPrimaryKeyFieldMySqlValues(tClass);
-        primaryKeyFieldMySqlValue = genericDataAccessServiceProvider.getPrimaryKeyFieldMySqlValue(tClass);
-        primaryKeyFieldValueSetter = genericDataAccessServiceProvider.getPrimaryKeyFieldValueSetter(tClass);
-        resultSetFieldValueSetters = genericDataAccessServiceProvider.getResultSetFieldValueSetters(tClass);
+        mySQLServiceFieldsProvider.validateClass(tClass);
+        tableName = mySQLServiceFieldsProvider.getTableName(tClass);
+        instantiator = mySQLServiceFieldsProvider.getInstantiator(tClass);
+        nonPrimaryKeyFieldMySqlValues = mySQLServiceFieldsProvider.getNonPrimaryKeyFieldMySqlValues(tClass);
+        primaryKeyFieldMySqlValue = mySQLServiceFieldsProvider.getPrimaryKeyFieldMySqlValue(tClass);
+        primaryKeyFieldValueSetter = mySQLServiceFieldsProvider.getPrimaryKeyFieldValueSetter(tClass);
+        resultSetFieldValueSetters = mySQLServiceFieldsProvider.getResultSetFieldValueSetters(tClass);
 
         fieldMySqlValueMap.put(primaryKeyFieldMySqlValue.getVariableName(), primaryKeyFieldMySqlValue);
         nonPrimaryKeyFieldMySqlValues.forEach(fieldMySqlValue -> fieldMySqlValueMap.put(fieldMySqlValue.getVariableName(), fieldMySqlValue));
 
-        allExceptPrimaryFieldValueSetterMap = genericDataAccessServiceProvider.getNonPrimaryFieldValueSetterMap(tClass);
+        allExceptPrimaryFieldValueSetterMap = mySQLServiceFieldsProvider.getNonPrimaryFieldValueSetterMap(tClass);
     }
 
     @Override
