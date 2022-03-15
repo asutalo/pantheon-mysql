@@ -11,28 +11,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-// utility class to make testing of the GenericDataAccessService easier
 class MySQLServiceFieldsProvider {
     static final String NO_PRIMARY_KEY_FOUND = "No primary key found";
     static final String THERE_CAN_BE_ONLY_ONE_PRIMARY_KEY = "There can be only one primary key";
     static final String FAILED_TO_LOCATE_AN_EMPTY_CONSTRUCTOR = "Failed to locate an empty constructor";
-    private static MySQLServiceFieldsProvider INSTANCE;
-
-    private MySQLServiceFieldsProvider() {
-    }
-
-    static synchronized MySQLServiceFieldsProvider getInstance() {
-        if (INSTANCE == null) {
-            INSTANCE = new MySQLServiceFieldsProvider();
-        }
-
-        return INSTANCE;
-    }
-
-    //for injecting mocks in tests to simplify instantiation of the GenericDataAccessService
-    static void setInstance(MySQLServiceFieldsProvider instance) {
-        INSTANCE = instance;
-    }
 
     <T> String getTableName(Class<T> tClass) {
         return tClass.getSimpleName();

@@ -3,7 +3,6 @@ package com.eu.at_it.pantheon.mysql.service;
 import com.eu.at_it.pantheon.mysql.service.annotations.MySqlField;
 import com.mysql.cj.MysqlType;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -13,13 +12,7 @@ class MySQLServiceFieldsProviderTest {
     private static final String PRIMARY_KEY_FIELD_IN_TEST_TARGET = "stringField";
     private static final String COLUMN_NAME = "column";
 
-    private MySQLServiceFieldsProvider mySQLServiceFieldsProvider;
-
-    @BeforeEach
-    void setUp() {
-        MySQLServiceFieldsProvider.setInstance(null);
-        mySQLServiceFieldsProvider = MySQLServiceFieldsProvider.getInstance();
-    }
+    private final MySQLServiceFieldsProvider mySQLServiceFieldsProvider = new MySQLServiceFieldsProvider();
 
     @Test
     void getTableName_shouldReturnSimpleClassName() {

@@ -70,7 +70,6 @@ class MySQLServiceTest {
     @BeforeEach
     void setUp() {
         someResultSetFieldValueSetters = new LinkedList<>(List.of(mockResultSetFieldValueSetter, mockResultSetFieldValueSetter));
-        MySQLServiceFieldsProvider.setInstance(mockMySQLServiceFieldsProvider);
 
         when(mockMySQLServiceFieldsProvider.getTableName(SOME_CLASS)).thenReturn(SOME_TABLE);
         when(mockMySQLServiceFieldsProvider.getInstantiator(any())).thenReturn(mockInstantiator);
@@ -156,7 +155,9 @@ class MySQLServiceTest {
     }
 
     private MySQLService<Object> genericDataAccessService() {
-        return new MySQLService<>(mockMySqlClient, TypeLiteral.get(SOME_CLASS));
+        MySQLService<Object> objectMySQLService = new MySQLService<>(mockMySqlClient, TypeLiteral.get(SOME_CLASS));
+        objectMySQLService.init(mockMySQLServiceFieldsProvider);
+        return objectMySQLService;
     }
 
     @DisplayName("Get one or all elements using a filter")

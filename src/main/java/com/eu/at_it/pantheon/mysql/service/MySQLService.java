@@ -7,7 +7,7 @@ import com.eu.at_it.pantheon.mysql.query.QueryBuilder;
 import com.eu.at_it.pantheon.service.data.DataService;
 import com.google.inject.TypeLiteral;
 
-import javax.inject.Inject;
+import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -18,35 +18,20 @@ import java.util.List;
 import java.util.Map;
 
 public class MySQLService<T> implements DataService<T, QueryBuilder> {
-    private final Instantiator<T> instantiator;
-    private final FieldMySqlValue<T> primaryKeyFieldMySqlValue;
-    private final List<FieldMySqlValue<T>> nonPrimaryKeyFieldMySqlValues;
+    private final Class<T> servingType;
+    private Instantiator<T> instantiator;
+    private FieldMySqlValue<T> primaryKeyFieldMySqlValue;
     private final Map<String, FieldMySqlValue<T>> fieldMySqlValueMap = new HashMap<>(); //will include primary key
-    private final List<ResultSetFieldValueSetter<T>> resultSetFieldValueSetters;
-    private final Map<String, FieldValueSetter<T>> allExceptPrimaryFieldValueSetterMap; //no primary key included but will include not annotated fields as well
-    private final FieldValueSetter<T> primaryKeyFieldValueSetter;
+    private List<FieldMySqlValue<T>> nonPrimaryKeyFieldMySqlValues;
+    private List<ResultSetFieldValueSetter<T>> resultSetFieldValueSetters;
+    private Map<String, FieldValueSetter<T>> allExceptPrimaryFieldValueSetterMap; //no primary key included but will include not annotated fields as well
     private final MySqlClient mySqlClient;
-    private final String tableName;
+    private FieldValueSetter<T> primaryKeyFieldValueSetter;
+    private String tableName;
 
-    @Inject
     public MySQLService(DataClient mySqlClient, TypeLiteral<T> typeLiteral) {
         this.mySqlClient = (MySqlClient) mySqlClient;
-        Class<T> tClass = (Class<T>) typeLiteral.getType();
-
-        MySQLServiceFieldsProvider mySQLServiceFieldsProvider = MySQLServiceFieldsProvider.getInstance();
-
-        mySQLServiceFieldsProvider.validateClass(tClass);
-        tableName = mySQLServiceFieldsProvider.getTableName(tClass);
-        instantiator = mySQLServiceFieldsProvider.getInstantiator(tClass);
-        nonPrimaryKeyFieldMySqlValues = mySQLServiceFieldsProvider.getNonPrimaryKeyFieldMySqlValues(tClass);
-        primaryKeyFieldMySqlValue = mySQLServiceFieldsProvider.getPrimaryKeyFieldMySqlValue(tClass);
-        primaryKeyFieldValueSetter = mySQLServiceFieldsProvider.getPrimaryKeyFieldValueSetter(tClass);
-        resultSetFieldValueSetters = mySQLServiceFieldsProvider.getResultSetFieldValueSetters(tClass);
-
-        fieldMySqlValueMap.put(primaryKeyFieldMySqlValue.getVariableName(), primaryKeyFieldMySqlValue);
-        nonPrimaryKeyFieldMySqlValues.forEach(fieldMySqlValue -> fieldMySqlValueMap.put(fieldMySqlValue.getVariableName(), fieldMySqlValue));
-
-        allExceptPrimaryFieldValueSetterMap = mySQLServiceFieldsProvider.getNonPrimaryFieldValueSetterMap(tClass);
+        this.servingType = (Class<T>) typeLiteral.getType();
     }
 
     @Override
@@ -192,5 +177,20 @@ public class MySQLService<T> implements DataService<T, QueryBuilder> {
         LinkedList<MySqlValue> mySqlValues = new LinkedList<>();
         nonPrimaryKeyFieldMySqlValues.forEach(getter -> mySqlValues.add(getter.apply(user)));
         return mySqlValues;
+    }
+
+    public void init(MySQLServiceFieldsProvider mySQLServiceFieldsProvider) {
+        mySQLServiceFieldsProvider.validateClass(servingType);
+        tableName = mySQLServiceFieldsProvider.getTableName(servingType);
+        instantiator = mySQLServiceFieldsProvider.getInstantiator(servingType);
+        nonPrimaryKeyFieldMySqlValues = mySQLServiceFieldsProvider.getNonPrimaryKeyFieldMySqlValues(servingType);
+        primaryKeyFieldMySqlValue = mySQLServiceFieldsProvider.getPrimaryKeyFieldMySqlValue(servingType);
+        primaryKeyFieldValueSetter = mySQLServiceFieldsProvider.getPrimaryKeyFieldValueSetter(servingType);
+        resultSetFieldValueSetters = mySQLServiceFieldsProvider.getResultSetFieldValueSetters(servingType);
+
+        fieldMySqlValueMap.put(primaryKeyFieldMySqlValue.getVariableName(), primaryKeyFieldMySqlValue);
+        nonPrimaryKeyFieldMySqlValues.forEach(fieldMySqlValue -> fieldMySqlValueMap.put(fieldMySqlValue.getVariableName(), fieldMySqlValue));
+
+        allExceptPrimaryFieldValueSetterMap = mySQLServiceFieldsProvider.getNonPrimaryFieldValueSetterMap(servingType);
     }
 }
