@@ -39,19 +39,32 @@ public class MySqlClient implements DataClient {
         return execute(queryBuilder, otherDmlQueryResultProcessorFunction);
     }
 
-    /**
-     * TODO add support for more complicated transactions by adding method that returns an open connection with
-     *  connection.setAutoCommit(false);
-     *  not sure if while autocommit is false a ResultSet can be created... might need to play with Savepoints as well...
-     *  in any case, should be doable to open a connection, execute multiple queries, and then close connection to persist
-     *  https://www.mysqltutorial.org/mysql-jdbc-transaction/
-     */
     <T> T execute(QueryBuilder queryBuilder, Function<PreparedStatement, T> preparedStatementExecutor) throws SQLException {
         Connection connection = connector.connect();
+        T queryResults = execute(queryBuilder, preparedStatementExecutor, connection);
+        connector.close(connection);
+        return queryResults;
+    }
+
+    <T> T execute(QueryBuilder queryBuilder, Function<PreparedStatement, T> preparedStatementExecutor, Connection connection) throws SQLException {
         PreparedStatement preparedStatement = queryBuilder.prepareStatement(connection);
         T queryResults = preparedStatementExecutor.apply(preparedStatement);
         preparedStatement.close();
-        connector.close(connection);
         return queryResults;
+    }
+
+    public Connection startTransaction() throws SQLException {
+        Connection connection = connector.connect();
+        connection.setAutoCommit(false);
+        return connection;
+    }
+
+    public void endTransaction(Connection connection) throws SQLException {
+        connection.commit();
+        connector.close(connection);
+    }
+
+    public void rollbackTransaction(Connection connection) throws SQLException {
+        connection.rollback();
     }
 }

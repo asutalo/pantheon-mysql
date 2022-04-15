@@ -14,11 +14,13 @@ import java.sql.SQLException;
 import java.util.function.Function;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -94,5 +96,42 @@ class MySqlClientTest {
         verify(mockPreparedStatement).close();
         verify(mockConnector).connect();
         verify(mockConnector).close(mockConnection);
+    }
+
+    @Test
+    void execute_shouldPrepQueryAndExecuteWithProvidedFunctionOnProvidedConnection() throws SQLException {
+        when(mockQueryBuilder.prepareStatement(mockConnection)).thenReturn(mockPreparedStatement);
+
+        mySqlClient.execute(mockQueryBuilder, mockFunction, mockConnection);
+
+        verify(mockFunction).apply(mockPreparedStatement);
+        verify(mockPreparedStatement).close();
+        verifyNoInteractions(mockConnector);
+    }
+
+    @Test
+    void startTransaction_shouldOpenConnectionWithoutAutoCommit() throws SQLException {
+        when(mockConnector.connect()).thenReturn(mockConnection);
+
+        Connection actualConnection = mySqlClient.startTransaction();
+
+        assertNotNull(actualConnection);
+        verify(mockConnector).connect();
+        verify(mockConnection).setAutoCommit(false);
+    }
+
+    @Test
+    void endTransaction_shouldCommitChanges() throws SQLException {
+        mySqlClient.endTransaction(mockConnection);
+
+        verify(mockConnection).commit();
+        verify(mockConnector).close(mockConnection);
+    }
+
+    @Test
+    void rollbackTransaction_shouldRollback() throws SQLException {
+        mySqlClient.rollbackTransaction(mockConnection);
+
+        verify(mockConnection).rollback();
     }
 }

@@ -7,7 +7,6 @@ import com.eu.at_it.pantheon.mysql.query.QueryBuilder;
 import com.eu.at_it.pantheon.service.data.DataService;
 import com.google.inject.TypeLiteral;
 
-import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
