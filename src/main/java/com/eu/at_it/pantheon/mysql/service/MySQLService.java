@@ -97,7 +97,7 @@ public class MySQLService<T> implements DataService<T, QueryBuilder> {
 
     @Override
     public T get(Map<String, Object> filter) throws SQLException, IllegalStateException {
-        QueryBuilder queryBuilder = filteredSelectFromFilter(filter);
+        QueryBuilder queryBuilder = filteredSelect(filter);
 
         return get(queryBuilder);
     }
@@ -121,7 +121,7 @@ public class MySQLService<T> implements DataService<T, QueryBuilder> {
 
     @Override
     public List<T> getAll(Map<String, Object> filter) throws SQLException, IllegalStateException {
-        QueryBuilder queryBuilder = filteredSelectFromFilter(filter);
+        QueryBuilder queryBuilder = filteredSelect(filter);
 
         return getAll(queryBuilder);
     }
@@ -139,7 +139,7 @@ public class MySQLService<T> implements DataService<T, QueryBuilder> {
         return instance;
     }
 
-    private QueryBuilder filteredSelectFromFilter(Map<String, Object> filter) {
+    private QueryBuilder filteredSelect(Map<String, Object> filter) {
         List<MySqlValue> filterMySqlValues = new ArrayList<>();
         filter.forEach((key, val) -> {
             if (fieldMySqlValueMap.containsKey(key)) {
