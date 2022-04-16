@@ -5,12 +5,14 @@ import java.sql.SQLException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 public class Update implements QueryPart {
     static final String UPDATE = "UPDATE ";
+    private static final String DELIMITER = ", ";
     private final String tableName;
     private final List<MySqlValue> values;
+    private static final String PLACEHOLDER = " = ?";
+
 
     public Update(String tableName, LinkedList<MySqlValue> values) {
         this.tableName = tableName;
@@ -19,9 +21,18 @@ public class Update implements QueryPart {
 
     @Override
     public String apply(String query) {
-        List<String> keysPlaceholders = values.stream().map(mySqlValue1 -> mySqlValue1.getKey().concat(" = ?")).collect(Collectors.toList());
+        MySqlValue mySqlValue = values.get(0);
 
-        return query.concat(UPDATE).concat(tableName).concat(" SET ").concat(String.join(", ", keysPlaceholders));
+        StringBuilder keysPlaceholderBuilder = new StringBuilder(mySqlValue.getKey().concat(PLACEHOLDER));
+
+        values.remove(0);
+
+        for (MySqlValue value : values) {
+            keysPlaceholderBuilder.append(DELIMITER);
+            keysPlaceholderBuilder.append(value.getKey().concat(" = ?"));
+        }
+
+        return query.concat(UPDATE).concat(tableName).concat(" SET ").concat(keysPlaceholderBuilder.toString());
     }
 
     @Override

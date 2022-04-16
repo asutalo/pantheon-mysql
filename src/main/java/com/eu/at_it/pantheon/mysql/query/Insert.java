@@ -5,10 +5,11 @@ import java.sql.SQLException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 public class Insert implements QueryPart {
     private static final String DELIMITER = ", ";
+    private static final String PLACEHOLDER = "?";
+
 
     private final String tableName;
     private final List<MySqlValue> values;
@@ -18,17 +19,25 @@ public class Insert implements QueryPart {
         this.values = values;
     }
 
-    public Insert(String tableName) {
-        this.tableName = tableName;
-        values = List.of();
-    }
-
     @Override
     public String apply(String query) {
-        List<String> keys = values.stream().map(MySqlValue::getKey).collect(Collectors.toList());
-        List<String> marks = values.stream().map(mySqlValue -> "?").collect(Collectors.toList());
+        MySqlValue mySqlValue = values.get(0);
+        String mySqlValueKey = mySqlValue.getKey();
 
-        return query.concat("INSERT INTO ").concat(tableName).concat(" (").concat(String.join(DELIMITER, keys)).concat(") VALUES (").concat(String.join(DELIMITER, marks)).concat(")");
+        StringBuilder keysBuilder = new StringBuilder(mySqlValueKey);
+        StringBuilder placeholdersBuilder = new StringBuilder(PLACEHOLDER);
+
+        values.remove(0);
+
+        for (MySqlValue value : values) {
+            keysBuilder.append(DELIMITER);
+            placeholdersBuilder.append(DELIMITER);
+
+            keysBuilder.append(value.getKey());
+            placeholdersBuilder.append(PLACEHOLDER);
+        }
+
+        return query.concat("INSERT INTO ").concat(tableName).concat(" (").concat(keysBuilder.toString()).concat(") VALUES (").concat(placeholdersBuilder.toString()).concat(")");
     }
 
     @Override

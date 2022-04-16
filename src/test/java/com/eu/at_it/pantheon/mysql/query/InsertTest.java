@@ -56,7 +56,7 @@ class InsertTest {
 
     @Test
     void getTableName() {
-        assertEquals(SOME_TABLE, new Insert(SOME_TABLE).getTableName());
+        assertEquals(SOME_TABLE, insert().getTableName());
     }
 
     @Test
