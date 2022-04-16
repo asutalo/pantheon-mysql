@@ -1,6 +1,5 @@
 plugins {
     id 'java-library'
-    id 'base'
 }
 
 repositories {
@@ -9,9 +8,6 @@ repositories {
 }
 
 group 'com.eu.atit'
-
-apply plugin: "java"
-apply plugin: 'maven'
 
 sourceCompatibility = '1.15'
 targetCompatibility = '1.15'
@@ -25,6 +21,8 @@ project.ext.setProperty("release.pushTagsOnly", "true")
 dependencies {
     api 'mysql:mysql-connector-java:8.0.28'
     api 'com.github.asutalo:pantheon:0.0.16'
+    api 'com.google.protobuf:protobuf-java:3.20.0'
+    //to override the version in mysql connector which has vulnerabilities
 
     testImplementation 'org.junit.jupiter:junit-jupiter:5.8.2'
     testImplementation 'org.mockito:mockito-core:4.4.0'
@@ -36,6 +34,6 @@ test {
 }
 
 wrapper {
-    gradleVersion = "6.8"
+    gradleVersion = "7.4.2"
     distributionType = Wrapper.DistributionType.ALL
 }
