@@ -16,7 +16,7 @@ public class Insert implements QueryPart {
 
     public Insert(String tableName, LinkedList<MySqlValue> values) {
         this.tableName = tableName;
-        this.values = values;
+        this.values = new LinkedList<>(values);
     }
 
     @Override

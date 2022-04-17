@@ -12,8 +12,8 @@ public class SelectWithAliases extends KeyWord implements QueryPart {
     static final String SEPARATOR = ", ";
     private final List<Pair<String, String>> columnsAndAliases;
 
-    public SelectWithAliases(ArrayList<Pair<String, String>> columnsAndAliases) {
-        this.columnsAndAliases = columnsAndAliases;
+    public SelectWithAliases(List<Pair<String, String>> columnsAndAliases) {
+        this.columnsAndAliases = new ArrayList<>(columnsAndAliases);
     }
 
     @Override
