@@ -7,7 +7,6 @@ import com.eu.at_it.pantheon.mysql.query.QueryBuilder;
 import com.eu.at_it.pantheon.service.data.DataService;
 import com.google.inject.TypeLiteral;
 
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -86,10 +85,10 @@ public class MySQLService<T> implements DataService<T, QueryBuilder> {
 
     @Override
     public T get(QueryBuilder filteredSelect) throws SQLException, IllegalStateException {
-        ResultSet resultSet = mySqlClient.prepAndExecuteSelectQuery(filteredSelect);
+        List<Map<String, Object>> resultSet = mySqlClient.prepAndExecuteSelectQuery(filteredSelect);
 
-        if (resultSet.first() && resultSet.isLast()) {
-            return instanceOfT(resultSet);
+        if (resultSet.size() == 1) {
+            return fullInstanceOfT(resultSet.get(0));
         }
 
         throw new IllegalStateException();
@@ -109,11 +108,11 @@ public class MySQLService<T> implements DataService<T, QueryBuilder> {
 
     @Override
     public List<T> getAll(QueryBuilder filteredSelect) throws SQLException {
-        ResultSet resultSet = mySqlClient.prepAndExecuteSelectQuery(filteredSelect);
-
+        List<Map<String, Object>> resultSet = mySqlClient.prepAndExecuteSelectQuery(filteredSelect);
         List<T> elements = new LinkedList<>();
-        while (resultSet.next()) {
-            elements.add(instanceOfT(resultSet));
+
+        for (Map<String, Object> row : resultSet) {
+            elements.add(fullInstanceOfT(row));
         }
 
         return elements;
@@ -160,10 +159,10 @@ public class MySQLService<T> implements DataService<T, QueryBuilder> {
         return queryBuilder;
     }
 
-    private T instanceOfT(ResultSet resultSet) {
+    private T fullInstanceOfT(Map<String, Object> row) {
         T instance = instantiator.get();
 
-        resultSetFieldValueSetters.forEach(setter -> setter.accept(instance, resultSet));
+        resultSetFieldValueSetters.forEach(setter -> setter.accept(instance, row));
 
         return instance;
     }

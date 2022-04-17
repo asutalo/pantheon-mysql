@@ -13,13 +13,13 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
@@ -40,9 +40,6 @@ class MySQLServiceTest {
 
     @Mock
     private MySqlClient mockMySqlClient;
-
-    @Mock
-    private ResultSet mockResultSet;
 
     @Mock
     private QueryBuilder mockQueryBuilder;
@@ -84,7 +81,7 @@ class MySQLServiceTest {
 
     @Test
     void shouldInitializeViaTheProvider() {
-        MySQLService<Object> mySQLService = genericDataAccessService();
+        MySQLService<Object> mySQLService = mySQLService();
 
         verify(mockMySQLServiceFieldsProvider).validateClass(SOME_CLASS);
         verify(mockMySQLServiceFieldsProvider).getNonPrimaryKeyFieldMySqlValues(SOME_CLASS);
@@ -101,6 +98,12 @@ class MySQLServiceTest {
         Assertions.assertEquals(expectedFieldMySqlValueMap, fieldMySqlValueMap);
     }
 
+    private MySQLService<Object> mySQLService() {
+        MySQLService<Object> objectMySQLService = new MySQLService<>(mockMySqlClient, TypeLiteral.get(SOME_CLASS));
+        objectMySQLService.init(mockMySQLServiceFieldsProvider);
+        return objectMySQLService;
+    }
+
     @DisplayName("Filtered selection query builder")
     @Nested
     class FilteredSelect {
@@ -110,7 +113,7 @@ class MySQLServiceTest {
             expectedQueryBuilder.select();
             expectedQueryBuilder.from(SOME_TABLE);
 
-            Assertions.assertEquals(expectedQueryBuilder, genericDataAccessService().filteredSelect());
+            Assertions.assertEquals(expectedQueryBuilder, mySQLService().filteredSelect());
         }
     }
 
@@ -119,23 +122,23 @@ class MySQLServiceTest {
     class Get {
         @Test
         void shouldReturnInstantiatedAndPopulatedObject() throws SQLException {
-            when(mockInstantiator.get()).thenReturn(mockObject);
-            when(mockMySqlClient.prepAndExecuteSelectQuery(mockQueryBuilder)).thenReturn(mockResultSet);
-            when(mockResultSet.first()).thenReturn(true);
-            when(mockResultSet.isLast()).thenReturn(true);
+            final List<Map<String, Object>> someSingleRowResult = List.of(Map.of("SomeString", "someVal"));
 
-            genericDataAccessService().get(mockQueryBuilder);
+            when(mockInstantiator.get()).thenReturn(mockObject);
+            when(mockMySqlClient.prepAndExecuteSelectQuery(mockQueryBuilder)).thenReturn(someSingleRowResult);
+
+            mySQLService().get(mockQueryBuilder);
 
             verify(mockInstantiator).get();
-            verify(mockResultSetFieldValueSetter, times(someResultSetFieldValueSetters.size())).accept(mockObject, mockResultSet);
+            verify(mockResultSetFieldValueSetter, times(someResultSetFieldValueSetters.size())).accept(mockObject, someSingleRowResult.get(0));
         }
 
         @Test
         void shouldThrowExceptionWhenSelectReturnsNoElements() throws SQLException {
-            when(mockMySqlClient.prepAndExecuteSelectQuery(mockQueryBuilder)).thenReturn(mockResultSet);
-            when(mockResultSet.first()).thenReturn(false);
+            List<Map<String, Object>> noRowsResult = List.of();
+            when(mockMySqlClient.prepAndExecuteSelectQuery(mockQueryBuilder)).thenReturn(noRowsResult);
 
-            Assertions.assertThrows(IllegalStateException.class, () -> genericDataAccessService().get(mockQueryBuilder));
+            Assertions.assertThrows(IllegalStateException.class, () -> mySQLService().get(mockQueryBuilder));
 
             verifyNoInteractions(mockInstantiator);
             verifyNoInteractions(mockResultSetFieldValueSetter);
@@ -143,21 +146,14 @@ class MySQLServiceTest {
 
         @Test
         void shouldThrowExceptionWhenSelectReturnsMoreThanOneElement() throws SQLException {
-            when(mockMySqlClient.prepAndExecuteSelectQuery(mockQueryBuilder)).thenReturn(mockResultSet);
-            when(mockResultSet.first()).thenReturn(true);
-            when(mockResultSet.isLast()).thenReturn(false);
+            List<Map<String, Object>> multipleRows = List.of(Map.of(), Map.of());
+            when(mockMySqlClient.prepAndExecuteSelectQuery(mockQueryBuilder)).thenReturn(multipleRows);
 
-            Assertions.assertThrows(IllegalStateException.class, () -> genericDataAccessService().get(mockQueryBuilder));
+            Assertions.assertThrows(IllegalStateException.class, () -> mySQLService().get(mockQueryBuilder));
 
             verifyNoInteractions(mockInstantiator);
             verifyNoInteractions(mockResultSetFieldValueSetter);
         }
-    }
-
-    private MySQLService<Object> genericDataAccessService() {
-        MySQLService<Object> objectMySQLService = new MySQLService<>(mockMySqlClient, TypeLiteral.get(SOME_CLASS));
-        objectMySQLService.init(mockMySQLServiceFieldsProvider);
-        return objectMySQLService;
     }
 
     @DisplayName("Get one or all elements using a filter")
@@ -165,7 +161,7 @@ class MySQLServiceTest {
     class FilteredGet {
         @Test
         void get_shouldUseProvidedFilterToMapToMySqlValuesAndIgnoreOnesThatDoNotMap() throws SQLException {
-            MySQLService<Object> spy = spy(genericDataAccessService());
+            MySQLService<Object> spy = spy(mySQLService());
             int intVal = 1;
             String stringVal = "2";
             Map<String, Object> filter = Map.of(SOME_VAR, intVal, SOME_OTHER_VAR, stringVal, "someNotExisting", 1);
@@ -189,12 +185,12 @@ class MySQLServiceTest {
         void get_shouldThrowExceptionWhenAllFiltersDoNotMatchMySqlValues() {
             Map<String, Object> filter = Map.of("someNotExisting", 1);
 
-            Assertions.assertThrows(IllegalStateException.class, () -> genericDataAccessService().get(filter));
+            Assertions.assertThrows(IllegalStateException.class, () -> mySQLService().get(filter));
         }
 
         @Test
         void getAll_shouldUseProvidedFilterToMapToMySqlValuesAndIgnoreOnesThatDoNotMap() throws SQLException {
-            MySQLService<Object> spy = spy(genericDataAccessService());
+            MySQLService<Object> spy = spy(mySQLService());
             int intVal = 1;
             String stringVal = "2";
             Map<String, Object> filter = Map.of(SOME_VAR, intVal, SOME_OTHER_VAR, stringVal, "someNotExisting", 1);
@@ -218,7 +214,7 @@ class MySQLServiceTest {
         void getAll_shouldThrowExceptionWhenAllFiltersDoNotMatchMySqlValues() {
             Map<String, Object> filter = Map.of("someNotExisting", 1);
 
-            Assertions.assertThrows(IllegalStateException.class, () -> genericDataAccessService().getAll(filter));
+            Assertions.assertThrows(IllegalStateException.class, () -> mySQLService().getAll(filter));
         }
     }
 
@@ -227,36 +223,38 @@ class MySQLServiceTest {
     class GetAll {
         @Test
         void shouldUseFilteredSelectToFetchAllElements() throws SQLException {
+            List<Map<String, Object>> multipleRows = List.of(Map.of(), Map.of());
+
             int expectedNumberOfElements = 2;
             int expectedNumberOfSetterOperations = expectedNumberOfElements * someResultSetFieldValueSetters.size();
 
             when(mockInstantiator.get()).thenReturn(mockObject).thenReturn(mockObject);
-            when(mockMySqlClient.prepAndExecuteSelectQuery(any())).thenReturn(mockResultSet);
-            when(mockResultSet.next()).thenReturn(true).thenReturn(true).thenReturn(false);
+            when(mockMySqlClient.prepAndExecuteSelectQuery(any())).thenReturn(multipleRows);
 
-            MySQLService<Object> mySQLService = genericDataAccessService();
+            MySQLService<Object> mySQLService = mySQLService();
 
             mySQLService.getAll();
 
             verify(mockMySqlClient).prepAndExecuteSelectQuery(mySQLService.filteredSelect());
             verify(mockInstantiator, times(expectedNumberOfElements)).get();
-            verify(mockResultSetFieldValueSetter, times(expectedNumberOfSetterOperations)).accept(mockObject, mockResultSet);
+            verify(mockResultSetFieldValueSetter, times(expectedNumberOfSetterOperations)).accept(eq(mockObject), any());
         }
 
         @Test
         void shouldFetchAllElements() throws SQLException {
+            List<Map<String, Object>> multipleRows = List.of(Map.of(), Map.of());
+
             int expectedNumberOfElements = 2;
             int expectedNumberOfSetterOperations = expectedNumberOfElements * someResultSetFieldValueSetters.size();
 
             when(mockInstantiator.get()).thenReturn(mockObject).thenReturn(mockObject);
-            when(mockMySqlClient.prepAndExecuteSelectQuery(mockQueryBuilder)).thenReturn(mockResultSet);
-            when(mockResultSet.next()).thenReturn(true).thenReturn(true).thenReturn(false);
+            when(mockMySqlClient.prepAndExecuteSelectQuery(mockQueryBuilder)).thenReturn(multipleRows);
 
-            genericDataAccessService().getAll(mockQueryBuilder);
+            mySQLService().getAll(mockQueryBuilder);
 
             verify(mockMySqlClient).prepAndExecuteSelectQuery(mockQueryBuilder);
             verify(mockInstantiator, times(expectedNumberOfElements)).get();
-            verify(mockResultSetFieldValueSetter, times(expectedNumberOfSetterOperations)).accept(mockObject, mockResultSet);
+            verify(mockResultSetFieldValueSetter, times(expectedNumberOfSetterOperations)).accept(eq(mockObject), any());
         }
 
     }
@@ -275,7 +273,7 @@ class MySQLServiceTest {
             expectedQueryBuilder.where();
             expectedQueryBuilder.keyIsVal(mockMySqlValue);
 
-            genericDataAccessService().delete(mockObject);
+            mySQLService().delete(mockObject);
 
             verify(mockMySqlClient).prepAndExecuteOtherDmlQuery(expectedQueryBuilder);
         }
@@ -285,7 +283,7 @@ class MySQLServiceTest {
             when(mockFieldMySqlValue.apply(mockObject)).thenReturn(mockMySqlValue);
             when(mockMySqlClient.prepAndExecuteOtherDmlQuery(any())).thenReturn(0);
 
-            Assertions.assertThrows(RuntimeException.class, () -> genericDataAccessService().delete(mockObject));
+            Assertions.assertThrows(RuntimeException.class, () -> mySQLService().delete(mockObject));
         }
 
     }
@@ -303,7 +301,7 @@ class MySQLServiceTest {
             QueryBuilder expectedQueryBuilder = new QueryBuilder();
             expectedQueryBuilder.insert(SOME_TABLE, expectedMySqlValues);
 
-            Assertions.assertNotNull(genericDataAccessService().save(mockObject));
+            Assertions.assertNotNull(mySQLService().save(mockObject));
             verify(mockMySqlClient).prepAndExecuteInsertQuery(expectedQueryBuilder);
         }
     }
@@ -322,7 +320,7 @@ class MySQLServiceTest {
 
             when(mockMySqlClient.prepAndExecuteOtherDmlQuery(any())).thenReturn(1);
 
-            Assertions.assertNotNull(genericDataAccessService().update(mockObject));
+            Assertions.assertNotNull(mySQLService().update(mockObject));
             verify(mockMySqlClient).prepAndExecuteOtherDmlQuery(expectedQueryBuilder);
         }
 
@@ -331,7 +329,7 @@ class MySQLServiceTest {
             when(mockFieldMySqlValue.apply(mockObject)).thenReturn(mockMySqlValue).thenReturn(mockMySqlValue).thenReturn(mockMySqlValue);
             when(mockMySqlClient.prepAndExecuteOtherDmlQuery(any())).thenReturn(0);
 
-            Assertions.assertThrows(RuntimeException.class, () -> genericDataAccessService().update(mockObject));
+            Assertions.assertThrows(RuntimeException.class, () -> mySQLService().update(mockObject));
         }
 
     }
@@ -343,7 +341,7 @@ class MySQLServiceTest {
         void shouldInstantiateAnObjectWithMappedValuesAndIgnoringUnmappedValues() {
             when(mockInstantiator.get()).thenReturn(mockObject);
             int expectedValue = 1;
-            genericDataAccessService().instanceOfT(Map.of(SOME_VAR, expectedValue, "unmapped", "2"));
+            mySQLService().instanceOfT(Map.of(SOME_VAR, expectedValue, "unmapped", "2"));
 
             verify(mockFieldValueSetter).accept(mockObject, expectedValue);
             verifyNoMoreInteractions(mockFieldValueSetter);

@@ -3,32 +3,32 @@ package com.eu.at_it.pantheon.mysql.client;
 import com.eu.at_it.pantheon.client.data.DataClient;
 import com.eu.at_it.pantheon.mysql.query.QueryBuilder;
 
-import javax.sql.rowset.RowSetFactory;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 
 public class MySqlClient implements DataClient {
     private final Connector connector;
-    private final SelectQueryResultProcessorFunction selectQueryResultProcessorFunction;
+    private final SelectQueryResultProcessor selectQueryResultProcessor;
     private final InsertQueryResultProcessorFunction insertQueryResultProcessorFunction;
     private final OtherDmlQueryResultProcessorFunction otherDmlQueryResultProcessorFunction;
 
-    public MySqlClient(Connector connector, RowSetFactory rowSetFactory) {
+
+    //todo provide a factory for easier instantiation by user
+    public MySqlClient(Connector connector) {
         this.connector = connector;
 
-        CachedRowSetConversionFunction cachedRowSetConversionFunction = new CachedRowSetConversionFunction(rowSetFactory);
-
-        selectQueryResultProcessorFunction = new SelectQueryResultProcessorFunction(cachedRowSetConversionFunction);
+        selectQueryResultProcessor = new SelectQueryResultProcessor();
         insertQueryResultProcessorFunction = new InsertQueryResultProcessorFunction();
         otherDmlQueryResultProcessorFunction = new OtherDmlQueryResultProcessorFunction();
 
     }
 
-    public ResultSet prepAndExecuteSelectQuery(QueryBuilder queryBuilder) throws SQLException {
-        return execute(queryBuilder, selectQueryResultProcessorFunction);
+    public List<Map<String, Object>> prepAndExecuteSelectQuery(QueryBuilder queryBuilder) throws SQLException {
+        return execute(queryBuilder, selectQueryResultProcessor);
     }
 
     public int prepAndExecuteInsertQuery(QueryBuilder queryBuilder) throws SQLException {

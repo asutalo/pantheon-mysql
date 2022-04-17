@@ -1,11 +1,10 @@
 package com.eu.at_it.pantheon.mysql.service;
 
 import java.lang.reflect.Field;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.util.Map;
 import java.util.function.BiConsumer;
 
-class ResultSetFieldValueSetter<T> implements BiConsumer<T, ResultSet> {
+class ResultSetFieldValueSetter<T> implements BiConsumer<T, Map<String, Object>> {
     private final String fieldName;
     private final FieldValueSetter<T> fieldValueSetter;
 
@@ -20,12 +19,8 @@ class ResultSetFieldValueSetter<T> implements BiConsumer<T, ResultSet> {
     }
 
     @Override
-    public void accept(T setFieldOn, ResultSet resultSet) {
-        try {
-            fieldValueSetter.accept(setFieldOn, resultSet.getObject(fieldName));
-        } catch (SQLException e) {
-            throw new RuntimeException("Field not returned from query", e);
-        }
+    public void accept(T setFieldOn, Map<String, Object> resultSet) {
+        fieldValueSetter.accept(setFieldOn, resultSet.get(fieldName));
     }
 
     String getFieldName() {

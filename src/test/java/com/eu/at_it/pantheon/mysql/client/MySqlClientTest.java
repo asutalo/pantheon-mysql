@@ -9,8 +9,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -32,9 +33,6 @@ class MySqlClientTest {
     private Function<PreparedStatement, Object> mockFunction;
 
     @Mock
-    private ResultSet mockResultSet;
-
-    @Mock
     private Connection mockConnection;
 
     @Mock
@@ -50,12 +48,13 @@ class MySqlClientTest {
     void prepAndExecuteSelectQuery_ExecuteWithSelectQueryResultProcessorFunction() throws SQLException {
         MySqlClient spy = spy(mySqlClient);
 
-        doReturn(mockResultSet).when(spy).execute(any(), any());
+        List<Map<String, Object>> expected = List.of();
+        doReturn(expected).when(spy).execute(any(), any());
 
-        ResultSet actual = spy.prepAndExecuteSelectQuery(mockQueryBuilder);
+        List<Map<String, Object>> actual = spy.prepAndExecuteSelectQuery(mockQueryBuilder);
 
-        verify(spy).execute(eq(mockQueryBuilder), any(SelectQueryResultProcessorFunction.class));
-        assertEquals(mockResultSet, actual);
+        verify(spy).execute(eq(mockQueryBuilder), any(SelectQueryResultProcessor.class));
+        assertEquals(expected, actual);
     }
 
     @Test
