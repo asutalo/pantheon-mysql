@@ -12,24 +12,26 @@ public class Insert implements QueryPart {
 
 
     private final String tableName;
-    private final List<MySqlValue> values;
+    private final List<MySqlValue> valuesForQuery;
+    private final List<MySqlValue> valuesForParams;
 
-    public Insert(String tableName, LinkedList<MySqlValue> values) {
+    public Insert(String tableName, LinkedList<MySqlValue> valuesForQuery) {
         this.tableName = tableName;
-        this.values = new LinkedList<>(values);
+        this.valuesForQuery = new LinkedList<>(valuesForQuery);
+        this.valuesForParams = new LinkedList<>(valuesForQuery);
     }
 
     @Override
     public String apply(String query) {
-        MySqlValue mySqlValue = values.get(0);
+        MySqlValue mySqlValue = valuesForQuery.get(0);
         String mySqlValueKey = mySqlValue.getKey();
 
         StringBuilder keysBuilder = new StringBuilder(mySqlValueKey);
         StringBuilder placeholdersBuilder = new StringBuilder(PLACEHOLDER);
 
-        values.remove(0);
+        valuesForQuery.remove(0);
 
-        for (MySqlValue value : values) {
+        for (MySqlValue value : valuesForQuery) {
             keysBuilder.append(DELIMITER);
             placeholdersBuilder.append(DELIMITER);
 
@@ -42,7 +44,7 @@ public class Insert implements QueryPart {
 
     @Override
     public void apply(PreparedStatement preparedStatement) throws SQLException {
-        for (MySqlValue mySqlValue : values) {
+        for (MySqlValue mySqlValue : valuesForParams) {
             preparedStatement.setObject(mySqlValue.getParamIndex(), mySqlValue.getValue(), mySqlValue.getMysqlType());
         }
     }
@@ -51,20 +53,16 @@ public class Insert implements QueryPart {
         return tableName;
     }
 
-    public List<MySqlValue> getValues() {
-        return values;
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Insert insert = (Insert) o;
-        return Objects.equals(tableName, insert.tableName) && Objects.equals(values, insert.values);
+        return Objects.equals(tableName, insert.tableName) && Objects.equals(valuesForQuery, insert.valuesForQuery) && Objects.equals(valuesForParams, insert.valuesForParams);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(tableName, values);
+        return Objects.hash(tableName, valuesForQuery, valuesForParams);
     }
 }

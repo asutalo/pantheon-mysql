@@ -53,11 +53,11 @@ public class Update implements QueryPart {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Update update = (Update) o;
-        return Objects.equals(tableName, update.tableName) && Objects.equals(valuesForQuery, update.valuesForQuery);
+        return Objects.equals(tableName, update.tableName) && Objects.equals(valuesForQuery, update.valuesForQuery) && Objects.equals(valuesForParams, update.valuesForParams);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(tableName, valuesForQuery);
+        return Objects.hash(tableName, valuesForQuery, valuesForParams);
     }
 }

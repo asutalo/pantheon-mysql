@@ -60,14 +60,6 @@ class InsertTest {
     }
 
     @Test
-    void getValues() {
-        MySqlValue mockMySqlValue = mock(MySqlValue.class);
-        LinkedList<MySqlValue> expected = new LinkedList<>(List.of(mockMySqlValue, mockMySqlValue));
-
-        assertEquals(expected, new Insert(SOME_TABLE, expected).getValues());
-    }
-
-    @Test
     void equals() {
         Insert insert1 = insert();
         Insert insert2 = insert();
