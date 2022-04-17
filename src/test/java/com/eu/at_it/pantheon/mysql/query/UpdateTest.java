@@ -59,13 +59,6 @@ class UpdateTest {
     }
 
     @Test
-    void getValues() {
-        LinkedList<MySqlValue> expected = new LinkedList<>(List.of(mockMySqlValue, mockMySqlValue));
-
-        assertEquals(expected, new Update(SOME_TABLE, expected).getValues());
-    }
-
-    @Test
     void equals() {
         Update update1 = update();
         Update update2 = update();
