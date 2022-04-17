@@ -3,7 +3,7 @@ package com.eu.at_it.pantheon.mysql.query;
 import java.util.Objects;
 
 public class From extends KeyWord implements QueryPart {
-    static final String FROM = "FROM ";
+    static final String FROM = " FROM ";
     private final String tableName;
 
     public From(String tableName) {

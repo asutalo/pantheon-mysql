@@ -1,7 +1,7 @@
 package com.eu.at_it.pantheon.mysql.query;
 
 public class Delete extends KeyWord implements QueryPart {
-    static final String DELETE = "DELETE ";
+    static final String DELETE = "DELETE";
 
     @Override
     public String apply(String query) {

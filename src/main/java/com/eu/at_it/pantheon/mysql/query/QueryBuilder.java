@@ -1,9 +1,12 @@
 package com.eu.at_it.pantheon.mysql.query;
 
+import com.eu.at_it.pantheon.helper.Pair;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
@@ -16,6 +19,10 @@ public class QueryBuilder {
 
     public void select() {
         queryParts.add(new Select());
+    }
+
+    public void select(ArrayList<Pair<String, String>> columnsAndAliases) {
+        queryParts.add(new SelectWithAliases(columnsAndAliases));
     }
 
     public void insert(String tableName, LinkedList<MySqlValue> values) {

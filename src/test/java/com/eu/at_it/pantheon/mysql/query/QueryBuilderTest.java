@@ -1,5 +1,6 @@
 package com.eu.at_it.pantheon.mysql.query;
 
+import com.eu.at_it.pantheon.helper.Pair;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -9,6 +10,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -48,6 +50,28 @@ class QueryBuilderTest {
 
         QueryBuilder queryBuilder = new QueryBuilder();
         queryBuilder.select();
+        queryBuilder.from(SOME_TABLE);
+        queryBuilder.where();
+        queryBuilder.keyIsVal(mockMySqlValue);
+        queryBuilder.and();
+        queryBuilder.keyIsVal(mockMySqlValue);
+
+        Assertions.assertEquals(expectedQuery, queryBuilder.buildQueryString());
+        verify(mockMySqlValue, never()).setParamIndex(anyInt());
+    }
+
+    @Test
+    void buildSelectQueryWithColumnsAndAliases() {
+        String SOME_ALIAS = "someAlias";
+        String SOME_OTHER_ALIAS = "someOtherAlias";
+
+        ArrayList<Pair<String, String>> someColumnsAndAliases = new ArrayList<>(List.of(new Pair<>(SOME_KEY, SOME_ALIAS), new Pair<>(SOME_OTHER_KEY, SOME_OTHER_ALIAS)));
+
+        String expectedQuery = String.format("SELECT %s AS %s, %s AS %s FROM %s WHERE %s = ? AND %s = ?;", SOME_KEY, SOME_ALIAS, SOME_OTHER_KEY, SOME_OTHER_ALIAS, SOME_TABLE, SOME_WHERE_KEY, SOME_OTHER_KEY);
+        when(mockMySqlValue.getKey()).thenReturn(SOME_WHERE_KEY).thenReturn(SOME_OTHER_KEY);
+
+        QueryBuilder queryBuilder = new QueryBuilder();
+        queryBuilder.select(someColumnsAndAliases);
         queryBuilder.from(SOME_TABLE);
         queryBuilder.where();
         queryBuilder.keyIsVal(mockMySqlValue);
