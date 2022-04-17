@@ -1,5 +1,6 @@
 package com.eu.at_it.pantheon.mysql.service;
 
+import com.eu.at_it.pantheon.helper.Pair;
 import com.eu.at_it.pantheon.mysql.service.annotations.MySqlField;
 import com.mysql.cj.MysqlType;
 import org.junit.jupiter.api.Assertions;
@@ -7,6 +8,9 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Map;
+
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class MySQLServiceFieldsProviderTest {
     private static final String PRIMARY_KEY_FIELD_IN_TEST_TARGET = "stringField";
@@ -66,15 +70,20 @@ class MySQLServiceFieldsProviderTest {
     }
 
     @Test
-    void getResultSetFieldValueSetters_shouldProvideFieldValueSettersForAllAnnotatedFields() {
+    void getSpecificFieldValueSetters_shouldProvideFieldValueSettersForAllAnnotatedFields() {
         int fieldsInTestTarget = 3;
 
-        List<ResultSetFieldValueSetter<TestTarget>> resultSetFieldValueSetters = mySQLServiceFieldsProvider.getResultSetFieldValueSetters(TestTarget.class);
-        Assertions.assertEquals(fieldsInTestTarget, resultSetFieldValueSetters.size());
+        List<SpecificFieldValueSetter<TestTarget>> specificFieldValueSetters = mySQLServiceFieldsProvider.getSpecificFieldValueSetters(TestTarget.class);
+        Assertions.assertEquals(fieldsInTestTarget, specificFieldValueSetters.size());
 
-        Assertions.assertFalse(resultSetFieldValueSetters.stream().anyMatch(setter -> setter.getFieldName().equals("notAnnotated")));
-        Assertions.assertTrue(resultSetFieldValueSetters.stream().anyMatch(setter -> setter.getFieldName().equals(COLUMN_NAME)));
-        Assertions.assertTrue(resultSetFieldValueSetters.stream().anyMatch(setter -> !setter.getFieldName().equals(COLUMN_NAME)));
+        Assertions.assertFalse(specificFieldValueSetters.stream().anyMatch(setter -> setter.getFieldName().equals("notAnnotated")));
+
+        Assertions.assertTrue(specificFieldValueSetters.stream().anyMatch(setter -> setter.getFieldName().equals(COLUMN_NAME)));
+        Assertions.assertTrue(specificFieldValueSetters.stream().anyMatch(setter -> !setter.getFieldName().equals(COLUMN_NAME)));
+
+
+        Assertions.assertTrue(specificFieldValueSetters.stream().anyMatch(setter -> setter.getAliasFieldName().equals("TestTarget_" + COLUMN_NAME)));
+        Assertions.assertTrue(specificFieldValueSetters.stream().anyMatch(setter -> setter.fieldNameAndAlias().equals(new Pair<>(COLUMN_NAME, "TestTarget_" + COLUMN_NAME))));
     }
 
     @Test
@@ -102,6 +111,16 @@ class MySQLServiceFieldsProviderTest {
         int nonIdFieldsInTestTarget = 3;
         Assertions.assertEquals(nonIdFieldsInTestTarget, countFields(actual));
         Assertions.assertFalse(actual.containsKey("stringField"));
+    }
+
+    @Test
+    void getColumnsAndAliases() {
+        SpecificFieldValueSetter mockSpecificFieldValueSetter = mock(SpecificFieldValueSetter.class);
+        Pair<String, String> mockPair = mock(Pair.class);
+        Pair<String, String> mockOtherPair = mock(Pair.class);
+        when(mockSpecificFieldValueSetter.fieldNameAndAlias()).thenReturn(mockPair).thenReturn(mockOtherPair);
+
+        Assertions.assertEquals(List.of(mockPair, mockOtherPair), mySQLServiceFieldsProvider.getColumnsAndAliases(List.of(mockSpecificFieldValueSetter, mockSpecificFieldValueSetter)));
     }
 
     private int countFields(Map<String, FieldValueSetter<TestTarget>> actual) {

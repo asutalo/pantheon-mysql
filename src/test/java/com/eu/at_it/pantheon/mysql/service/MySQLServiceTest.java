@@ -51,7 +51,7 @@ class MySQLServiceTest {
     private FieldValueSetter<Object> mockFieldValueSetter;
 
     @Mock
-    private ResultSetFieldValueSetter<Object> mockResultSetFieldValueSetter;
+    private SpecificFieldValueSetter<Object> mockSpecificFieldValueSetter;
 
     @Mock
     private MySqlValue mockMySqlValue;
@@ -62,11 +62,11 @@ class MySQLServiceTest {
     @Mock
     private Object mockObject;
 
-    private LinkedList<ResultSetFieldValueSetter<Object>> someResultSetFieldValueSetters;
+    private LinkedList<SpecificFieldValueSetter<Object>> someSpecificFieldValueSetters;
 
     @BeforeEach
     void setUp() {
-        someResultSetFieldValueSetters = new LinkedList<>(List.of(mockResultSetFieldValueSetter, mockResultSetFieldValueSetter));
+        someSpecificFieldValueSetters = new LinkedList<>(List.of(mockSpecificFieldValueSetter, mockSpecificFieldValueSetter));
 
         when(mockMySQLServiceFieldsProvider.getTableName(SOME_CLASS)).thenReturn(SOME_TABLE);
         when(mockMySQLServiceFieldsProvider.getInstantiator(any())).thenReturn(mockInstantiator);
@@ -74,23 +74,26 @@ class MySQLServiceTest {
         when(mockMySQLServiceFieldsProvider.getPrimaryKeyFieldValueSetter(any())).thenReturn(mockFieldValueSetter);
         when(mockMySQLServiceFieldsProvider.getNonPrimaryFieldValueSetterMap(any())).thenReturn(Map.of(SOME_VAR, mockFieldValueSetter));
 
-        when(mockMySQLServiceFieldsProvider.getResultSetFieldValueSetters(any())).thenReturn(someResultSetFieldValueSetters);
+        when(mockMySQLServiceFieldsProvider.getSpecificFieldValueSetters(any())).thenReturn(someSpecificFieldValueSetters);
         when(mockMySQLServiceFieldsProvider.getNonPrimaryKeyFieldMySqlValues(any())).thenReturn(new LinkedList<>(List.of(mockFieldMySqlValue, mockFieldMySqlValue)));
         when(mockFieldMySqlValue.getVariableName()).thenReturn(SOME_VAR).thenReturn(SOME_OTHER_VAR);
     }
 
     @Test
     void shouldInitializeViaTheProvider() {
+        when(mockMySQLServiceFieldsProvider.getSpecificFieldValueSetters(any())).thenReturn(someSpecificFieldValueSetters);
+
         MySQLService<Object> mySQLService = mySQLService();
 
         verify(mockMySQLServiceFieldsProvider).validateClass(SOME_CLASS);
         verify(mockMySQLServiceFieldsProvider).getNonPrimaryKeyFieldMySqlValues(SOME_CLASS);
-        verify(mockMySQLServiceFieldsProvider).getResultSetFieldValueSetters(SOME_CLASS);
+        verify(mockMySQLServiceFieldsProvider).getSpecificFieldValueSetters(SOME_CLASS);
         verify(mockMySQLServiceFieldsProvider).getInstantiator(SOME_CLASS);
         verify(mockMySQLServiceFieldsProvider).getPrimaryKeyFieldValueSetter(SOME_CLASS);
         verify(mockMySQLServiceFieldsProvider).getPrimaryKeyFieldMySqlValue(SOME_CLASS);
         verify(mockMySQLServiceFieldsProvider).getTableName(SOME_CLASS);
         verify(mockMySQLServiceFieldsProvider).getNonPrimaryFieldValueSetterMap(SOME_CLASS);
+        verify(mockMySQLServiceFieldsProvider).getColumnsAndAliases(someSpecificFieldValueSetters);
         verifyNoMoreInteractions(mockMySQLServiceFieldsProvider);
 
         Map<String, FieldMySqlValue<Object>> fieldMySqlValueMap = mySQLService.getFieldMySqlValueMap();
@@ -109,11 +112,13 @@ class MySQLServiceTest {
     class FilteredSelect {
         @Test
         void shouldReturnQueryBuilderFilteredByTableName() {
+            MySQLService<Object> mySQLService = mySQLService();
+
             QueryBuilder expectedQueryBuilder = new QueryBuilder();
-            expectedQueryBuilder.select();
+            expectedQueryBuilder.select(mySQLService.columnsAndAliases());
             expectedQueryBuilder.from(SOME_TABLE);
 
-            Assertions.assertEquals(expectedQueryBuilder, mySQLService().filteredSelect());
+            Assertions.assertEquals(expectedQueryBuilder, mySQLService.filteredSelect());
         }
     }
 
@@ -130,7 +135,7 @@ class MySQLServiceTest {
             mySQLService().get(mockQueryBuilder);
 
             verify(mockInstantiator).get();
-            verify(mockResultSetFieldValueSetter, times(someResultSetFieldValueSetters.size())).accept(mockObject, someSingleRowResult.get(0));
+            verify(mockSpecificFieldValueSetter, times(someSpecificFieldValueSetters.size())).accept(mockObject, someSingleRowResult.get(0));
         }
 
         @Test
@@ -141,7 +146,7 @@ class MySQLServiceTest {
             Assertions.assertThrows(IllegalStateException.class, () -> mySQLService().get(mockQueryBuilder));
 
             verifyNoInteractions(mockInstantiator);
-            verifyNoInteractions(mockResultSetFieldValueSetter);
+            verifyNoInteractions(mockSpecificFieldValueSetter);
         }
 
         @Test
@@ -152,7 +157,7 @@ class MySQLServiceTest {
             Assertions.assertThrows(IllegalStateException.class, () -> mySQLService().get(mockQueryBuilder));
 
             verifyNoInteractions(mockInstantiator);
-            verifyNoInteractions(mockResultSetFieldValueSetter);
+            verifyNoInteractions(mockSpecificFieldValueSetter);
         }
     }
 
@@ -226,7 +231,7 @@ class MySQLServiceTest {
             List<Map<String, Object>> multipleRows = List.of(Map.of(), Map.of());
 
             int expectedNumberOfElements = 2;
-            int expectedNumberOfSetterOperations = expectedNumberOfElements * someResultSetFieldValueSetters.size();
+            int expectedNumberOfSetterOperations = expectedNumberOfElements * someSpecificFieldValueSetters.size();
 
             when(mockInstantiator.get()).thenReturn(mockObject).thenReturn(mockObject);
             when(mockMySqlClient.prepAndExecuteSelectQuery(any())).thenReturn(multipleRows);
@@ -237,7 +242,7 @@ class MySQLServiceTest {
 
             verify(mockMySqlClient).prepAndExecuteSelectQuery(mySQLService.filteredSelect());
             verify(mockInstantiator, times(expectedNumberOfElements)).get();
-            verify(mockResultSetFieldValueSetter, times(expectedNumberOfSetterOperations)).accept(eq(mockObject), any());
+            verify(mockSpecificFieldValueSetter, times(expectedNumberOfSetterOperations)).accept(eq(mockObject), any());
         }
 
         @Test
@@ -245,7 +250,7 @@ class MySQLServiceTest {
             List<Map<String, Object>> multipleRows = List.of(Map.of(), Map.of());
 
             int expectedNumberOfElements = 2;
-            int expectedNumberOfSetterOperations = expectedNumberOfElements * someResultSetFieldValueSetters.size();
+            int expectedNumberOfSetterOperations = expectedNumberOfElements * someSpecificFieldValueSetters.size();
 
             when(mockInstantiator.get()).thenReturn(mockObject).thenReturn(mockObject);
             when(mockMySqlClient.prepAndExecuteSelectQuery(mockQueryBuilder)).thenReturn(multipleRows);
@@ -254,7 +259,7 @@ class MySQLServiceTest {
 
             verify(mockMySqlClient).prepAndExecuteSelectQuery(mockQueryBuilder);
             verify(mockInstantiator, times(expectedNumberOfElements)).get();
-            verify(mockResultSetFieldValueSetter, times(expectedNumberOfSetterOperations)).accept(eq(mockObject), any());
+            verify(mockSpecificFieldValueSetter, times(expectedNumberOfSetterOperations)).accept(eq(mockObject), any());
         }
 
     }

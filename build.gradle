@@ -20,7 +20,7 @@ project.ext.setProperty("release.pushTagsOnly", "true")
 
 dependencies {
     api 'mysql:mysql-connector-java:8.0.28'
-    api 'com.github.asutalo:pantheon:0.0.16'
+    api 'com.github.asutalo:pantheon:0.0.19'
     api 'com.google.protobuf:protobuf-java:3.20.0'
     //to override the version in mysql connector which has vulnerabilities
 

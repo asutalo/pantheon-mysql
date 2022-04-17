@@ -1,6 +1,7 @@
 package com.eu.at_it.pantheon.mysql.service;
 
 import com.eu.at_it.pantheon.client.data.DataClient;
+import com.eu.at_it.pantheon.helper.Pair;
 import com.eu.at_it.pantheon.mysql.client.MySqlClient;
 import com.eu.at_it.pantheon.mysql.query.MySqlValue;
 import com.eu.at_it.pantheon.mysql.query.QueryBuilder;
@@ -21,7 +22,8 @@ public class MySQLService<T> implements DataService<T, QueryBuilder> {
     private FieldMySqlValue<T> primaryKeyFieldMySqlValue;
     private final Map<String, FieldMySqlValue<T>> fieldMySqlValueMap = new HashMap<>(); //will include primary key
     private List<FieldMySqlValue<T>> nonPrimaryKeyFieldMySqlValues;
-    private List<ResultSetFieldValueSetter<T>> resultSetFieldValueSetters;
+    private List<SpecificFieldValueSetter<T>> specificFieldValueSetters;
+    private ArrayList<Pair<String, String>> columnsAndAliases;
     private Map<String, FieldValueSetter<T>> allExceptPrimaryFieldValueSetterMap; //no primary key included but will include not annotated fields as well
     private final MySqlClient mySqlClient;
     private FieldValueSetter<T> primaryKeyFieldValueSetter;
@@ -77,7 +79,7 @@ public class MySQLService<T> implements DataService<T, QueryBuilder> {
     @Override
     public QueryBuilder filteredSelect() {
         QueryBuilder queryBuilder = new QueryBuilder();
-        queryBuilder.select();
+        queryBuilder.select(columnsAndAliases);
         queryBuilder.from(tableName);
 
         return queryBuilder;
@@ -162,7 +164,7 @@ public class MySQLService<T> implements DataService<T, QueryBuilder> {
     private T fullInstanceOfT(Map<String, Object> row) {
         T instance = instantiator.get();
 
-        resultSetFieldValueSetters.forEach(setter -> setter.accept(instance, row));
+        specificFieldValueSetters.forEach(setter -> setter.accept(instance, row));
 
         return instance;
     }
@@ -184,11 +186,17 @@ public class MySQLService<T> implements DataService<T, QueryBuilder> {
         nonPrimaryKeyFieldMySqlValues = mySQLServiceFieldsProvider.getNonPrimaryKeyFieldMySqlValues(servingType);
         primaryKeyFieldMySqlValue = mySQLServiceFieldsProvider.getPrimaryKeyFieldMySqlValue(servingType);
         primaryKeyFieldValueSetter = mySQLServiceFieldsProvider.getPrimaryKeyFieldValueSetter(servingType);
-        resultSetFieldValueSetters = mySQLServiceFieldsProvider.getResultSetFieldValueSetters(servingType);
+        specificFieldValueSetters = mySQLServiceFieldsProvider.getSpecificFieldValueSetters(servingType);
+
+        columnsAndAliases = mySQLServiceFieldsProvider.getColumnsAndAliases(specificFieldValueSetters);
 
         fieldMySqlValueMap.put(primaryKeyFieldMySqlValue.getVariableName(), primaryKeyFieldMySqlValue);
         nonPrimaryKeyFieldMySqlValues.forEach(fieldMySqlValue -> fieldMySqlValueMap.put(fieldMySqlValue.getVariableName(), fieldMySqlValue));
 
         allExceptPrimaryFieldValueSetterMap = mySQLServiceFieldsProvider.getNonPrimaryFieldValueSetterMap(servingType);
+    }
+
+    ArrayList<Pair<String, String>> columnsAndAliases() {
+        return columnsAndAliases;
     }
 }

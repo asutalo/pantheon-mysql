@@ -1,5 +1,6 @@
 package com.eu.at_it.pantheon.mysql.service;
 
+import com.eu.at_it.pantheon.helper.Pair;
 import com.eu.at_it.pantheon.mysql.service.annotations.MySqlField;
 
 import java.lang.reflect.Constructor;
@@ -50,17 +51,18 @@ class MySQLServiceFieldsProvider {
         return getters;
     }
 
-    <T> List<ResultSetFieldValueSetter<T>> getResultSetFieldValueSetters(Class<T> tClass) {
-        List<ResultSetFieldValueSetter<T>> setters = new ArrayList<>();
+    <T> List<SpecificFieldValueSetter<T>> getSpecificFieldValueSetters(Class<T> tClass) {
+        List<SpecificFieldValueSetter<T>> setters = new ArrayList<>();
+        String tableName = getTableName(tClass);
         for (Field field : getDeclaredSqlFields(tClass)) {
             field.setAccessible(true);
             MySqlField mySqlFieldInfo = field.getAnnotation(MySqlField.class);
 
             String fieldName = mySqlFieldInfo.column();
             if (fieldName.isBlank()) {
-                setters.add(new ResultSetFieldValueSetter<>(field));
+                setters.add(new SpecificFieldValueSetter<>(field, tableName));
             } else {
-                setters.add(new ResultSetFieldValueSetter<>(field, fieldName));
+                setters.add(new SpecificFieldValueSetter<>(field, fieldName, tableName));
             }
         }
 
@@ -142,5 +144,14 @@ class MySQLServiceFieldsProvider {
         }
 
         return map;
+    }
+
+    public <T> ArrayList<Pair<String, String>> getColumnsAndAliases(List<SpecificFieldValueSetter<T>> specificFieldValueSetters) {
+        ArrayList<Pair<String, String>> columnsAndAliases = new ArrayList<>();
+        for (SpecificFieldValueSetter<T> specificFieldValueSetter : specificFieldValueSetters) {
+            columnsAndAliases.add(specificFieldValueSetter.fieldNameAndAlias());
+        }
+
+        return columnsAndAliases;
     }
 }
