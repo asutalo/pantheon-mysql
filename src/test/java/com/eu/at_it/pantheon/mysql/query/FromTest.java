@@ -6,6 +6,8 @@ import org.junit.jupiter.api.Test;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
+import static com.eu.at_it.pantheon.mysql.query.From.FROM;
+import static com.eu.at_it.pantheon.mysql.query.From.SPACE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
@@ -17,7 +19,7 @@ class FromTest {
 
     @Test
     void apply() {
-        String expectedQuery = SOME_QUERY + From.FROM + SOME_TABLE;
+        String expectedQuery = SOME_QUERY + FROM + SOME_TABLE + SPACE + SOME_TABLE;
 
         assertEquals(expectedQuery, from().apply(SOME_QUERY));
     }

@@ -4,6 +4,7 @@ import java.util.Objects;
 
 public class From extends KeyWord implements QueryPart {
     static final String FROM = " FROM ";
+    static final String SPACE = " ";
     private final String tableName;
 
     public From(String tableName) {
@@ -12,7 +13,7 @@ public class From extends KeyWord implements QueryPart {
 
     @Override
     public String apply(String query) {
-        return query.concat(FROM).concat(tableName);
+        return query.concat(FROM).concat(tableName).concat(SPACE).concat(tableName);
     }
 
     public String getTableName() {

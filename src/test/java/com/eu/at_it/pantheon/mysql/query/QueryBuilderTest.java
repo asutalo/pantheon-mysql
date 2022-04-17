@@ -45,7 +45,7 @@ class QueryBuilderTest {
 
     @Test
     void buildSelectQuery() {
-        String expectedQuery = String.format("SELECT * FROM %s WHERE %s = ? AND %s = ?;", SOME_TABLE, SOME_WHERE_KEY, SOME_OTHER_KEY);
+        String expectedQuery = String.format("SELECT * FROM %s %s WHERE %s = ? AND %s = ?;", SOME_TABLE, SOME_TABLE, SOME_WHERE_KEY, SOME_OTHER_KEY);
         when(mockMySqlValue.getKey()).thenReturn(SOME_WHERE_KEY).thenReturn(SOME_OTHER_KEY);
 
         QueryBuilder queryBuilder = new QueryBuilder();
@@ -67,7 +67,7 @@ class QueryBuilderTest {
 
         ArrayList<Pair<String, String>> someColumnsAndAliases = new ArrayList<>(List.of(new Pair<>(SOME_KEY, SOME_ALIAS), new Pair<>(SOME_OTHER_KEY, SOME_OTHER_ALIAS)));
 
-        String expectedQuery = String.format("SELECT %s AS %s, %s AS %s FROM %s WHERE %s = ? AND %s = ?;", SOME_KEY, SOME_ALIAS, SOME_OTHER_KEY, SOME_OTHER_ALIAS, SOME_TABLE, SOME_WHERE_KEY, SOME_OTHER_KEY);
+        String expectedQuery = String.format("SELECT %s AS %s, %s AS %s FROM %s %s WHERE %s = ? AND %s = ?;", SOME_KEY, SOME_ALIAS, SOME_OTHER_KEY, SOME_OTHER_ALIAS, SOME_TABLE, SOME_TABLE, SOME_WHERE_KEY, SOME_OTHER_KEY);
         when(mockMySqlValue.getKey()).thenReturn(SOME_WHERE_KEY).thenReturn(SOME_OTHER_KEY);
 
         QueryBuilder queryBuilder = new QueryBuilder();
@@ -122,7 +122,7 @@ class QueryBuilderTest {
 
     @Test
     void buildDeleteQuery() {
-        String expectedQuery = String.format("DELETE FROM %s WHERE %s = ? AND %s = ?;", SOME_TABLE, SOME_WHERE_KEY, SOME_OTHER_KEY);
+        String expectedQuery = String.format("DELETE FROM %s %s WHERE %s = ? AND %s = ?;", SOME_TABLE, SOME_TABLE, SOME_WHERE_KEY, SOME_OTHER_KEY);
 
         when(mockMySqlValue.getKey()).thenReturn(SOME_WHERE_KEY).thenReturn(SOME_OTHER_KEY);
 
